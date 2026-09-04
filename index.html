@@ -173,23 +173,30 @@
 
   <aside class="chat-widget" aria-label="BUMA information assistant" aria-hidden="true">
     <header class="chat-header">
-      <div class="chat-avatar"><img src="assets/logo.webp" alt="" /><span></span></div>
-      <div><strong>Ask BUMA</strong><small>Academy information assistant</small></div>
+      <strong>Buffalo United</strong>
+      <div class="chat-faces" aria-hidden="true"><img src="assets/instructor-josh.webp" alt="" /><img src="assets/instructor-keith.webp" alt="" /><img src="assets/instructor-larry.webp" alt="" /></div>
+      <button class="chat-reset" type="button" aria-label="Start a new conversation">↻</button>
       <button class="chat-close" type="button" aria-label="Close assistant">×</button>
     </header>
-    <div class="chat-status"><span></span> Grounded in 14 verified academy sources</div>
-    <div class="chat-messages" id="chat-messages" role="log" aria-live="polite">
-      <div class="message assistant"><p>Hey! I can help with programs, published class times, instructors, kids training, contact info and what to expect. What would you like to know?</p></div>
-    </div>
-    <div class="chat-suggestions" id="chat-suggestions">
-      <button type="button">When are kids classes?</button><button type="button">I'm a beginner</button><button type="button">Show weekend classes</button>
-    </div>
+    <section class="chat-welcome" id="chat-welcome" aria-label="Start a conversation">
+      <h2>Buffalo United<br />Martial Arts</h2>
+      <p>Ask about classes, schedules, coaches, kids training, and your first visit.</p>
+      <div class="chat-prompt-label">Quick prompts:</div>
+      <div class="chat-suggestions" id="chat-suggestions">
+        <button type="button"><span>✦</span> What classes are available?</button>
+        <button type="button"><span>✦</span> When are kids classes?</button>
+        <button type="button"><span>✦</span> I’m new to martial arts</button>
+        <button type="button"><span>✦</span> Show weekend classes</button>
+      </div>
+    </section>
+    <div class="chat-messages" id="chat-messages" role="log" aria-live="polite"></div>
     <form class="chat-form" id="chat-form">
       <label class="sr-only" for="chat-input">Ask a question about Buffalo United Martial Arts</label>
-      <textarea id="chat-input" rows="1" placeholder="Ask about BUMA…" autocomplete="off"></textarea>
-      <button type="submit" aria-label="Send question">↑</button>
+      <textarea id="chat-input" rows="1" placeholder="How can I help you?" autocomplete="off"></textarea>
+      <button type="submit" aria-label="Send question">→</button>
     </form>
-    <p class="chat-disclaimer">Answers use published academy information. Confirm schedule changes directly.</p>
+    <p class="chat-disclaimer">Grounded in published academy information</p>
+    <nav class="chat-nav" aria-label="Assistant navigation"><button type="button" class="chat-home active">⌂<span>Home</span></button><button type="button" class="chat-messages-tab">▣<span>Messages</span></button><button type="button" class="chat-schedule-tab">▣<span>Schedule</span></button><a href="#community" class="chat-visit">⌖<span>Visit</span></a></nav>
   </aside>
 
   <script src="knowledge.js"></script>
