@@ -21,3 +21,6 @@ footer{background:#050607;color:#fff;padding:40px 5vw;display:grid;grid-template
 
 /* The legacy header made its second div vertical; keep the new coach stack horizontal. */
 .chat-header > div.chat-faces{flex-direction:row}
+
+/* Refined controls inspired by the RiverWorks widget reference. */
+.chat-form button{display:grid;place-items:center}.chat-form button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.chat-nav button,.chat-nav a{position:relative;font-size:inherit;text-decoration:none}.chat-nav svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.45;stroke-linecap:round;stroke-linejoin:round}.chat-nav .chat-messages-tab.active svg,.chat-widget.in-conversation .chat-messages-tab svg{fill:#181c1f;stroke:#181c1f}.chat-nav .chat-messages-tab.active .message-lines,.chat-widget.in-conversation .chat-messages-tab .message-lines{stroke:#fff}.chat-nav .active:before,.chat-widget.in-conversation .chat-nav .chat-messages-tab:before{top:7px;margin-top:0}.chat-nav .chat-home:before{top:7px;margin-top:0}
