@@ -20,4 +20,4 @@ footer{background:#050607;color:#fff;padding:40px 5vw;display:grid;grid-template
 @media(max-width:650px){.chat-widget{right:6px;bottom:6px;width:calc(100vw - 12px);height:min(640px,calc(100vh - 12px));border-radius:20px}.chat-header{padding:18px 21px}.chat-welcome{padding-left:21px;padding-right:21px}.chat-welcome h2{font-size:24px}.chat-suggestions button{min-height:46px}.chat-form{margin-left:18px;margin-right:18px}}
 
 /* The legacy header made its second div vertical; keep the new coach stack horizontal. */
-.chat-header > .chat-faces{flex-direction:row}
+.chat-header > div.chat-faces{flex-direction:row}
