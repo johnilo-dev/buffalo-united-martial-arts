@@ -84,7 +84,7 @@ function sourceView(documents) {
 function corsHeaders(origin, allowed) {
   return {
     'Access-Control-Allow-Origin': allowed ? origin : 'null',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Max-Age': '86400',
     'Cache-Control': 'no-store',
@@ -92,6 +92,22 @@ function corsHeaders(origin, allowed) {
     'Referrer-Policy': 'no-referrer',
     'X-Content-Type-Options': 'nosniff',
   };
+}
+
+function healthResponse() {
+  return new Response(JSON.stringify({
+    service: 'BUMA Chat API',
+    status: 'ok',
+    message: 'The chat service is online. Chat requests are accepted from the approved BUMA website.',
+  }, null, 2), {
+    status: 200,
+    headers: {
+      'Cache-Control': 'no-store',
+      'Content-Type': 'application/json; charset=utf-8',
+      'Referrer-Policy': 'no-referrer',
+      'X-Content-Type-Options': 'nosniff',
+    },
+  });
 }
 
 function response(body, status, origin, allowed) {
@@ -171,6 +187,10 @@ async function generateAnswer(message, documents, apiKey) {
 }
 
 export async function handleRequest(request, env = {}) {
+  const url = new URL(request.url);
+  if (request.method === 'GET' && (url.pathname === '/' || url.pathname === '/health')) {
+    return healthResponse();
+  }
   const origin = request.headers.get('Origin') || '';
   const originAllowed = allowedOrigin(origin, env);
   if (request.method === 'OPTIONS') {

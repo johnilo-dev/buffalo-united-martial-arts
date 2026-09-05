@@ -20,6 +20,17 @@ test('retrieval prioritizes kids schedule information', () => {
   assert.equal(results[0].id, 'kids');
 });
 
+test('returns a safe health response when opened in a browser', async () => {
+  const response = await handleRequest(new Request('https://buma-chat-api.example.test/', { method: 'GET' }), {
+    DEEPSEEK_API_KEY: 'must-not-be-exposed',
+  });
+  assert.equal(response.status, 200);
+  const payload = await response.json();
+  assert.equal(payload.service, 'BUMA Chat API');
+  assert.equal(payload.status, 'ok');
+  assert.doesNotMatch(JSON.stringify(payload), /must-not-be-exposed/);
+});
+
 test('returns grounded retrieval answer when API secret is absent', async () => {
   const response = await handleRequest(request('When is Sunday boxing?'), {});
   assert.equal(response.status, 200);
