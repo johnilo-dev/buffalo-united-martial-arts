@@ -131,7 +131,6 @@ function buffaloTime() {
     day: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
-    timeZoneName: 'short',
   }).format(new Date());
 }
 
@@ -222,7 +221,7 @@ function composeLocal(query, documents) {
     return "I’m BUMA’s virtual receptionist. I can answer from approved public academy info, and I use DeepSeek only when a question needs a little extra help. I’m not human and I can’t complete bookings, but I can point you to the right next step.";
   }
   if (/\b(what time is it|current time|time now|today's date|todays date|what day is it|current date)\b/.test(normalized)) {
-    return `In Buffalo, it’s ${buffaloTime()}. Class times can still change, so please confirm with the academy before your first visit.`;
+    return `It’s ${buffaloTime()} in Buffalo. If you’re checking class timing, I can show the published schedule too.`;
   }
   if (/\b(weather|temperature|raining|snowing|forecast)\b/.test(normalized)) {
     return "I can’t check live weather from here, but I can help with BUMA’s published class times, location and contact info. If weather might affect your trip, it’s best to call before heading over.";

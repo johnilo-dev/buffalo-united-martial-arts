@@ -56,7 +56,6 @@ function buffaloTime() {
     day: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
-    timeZoneName: 'short',
   }).format(new Date());
 }
 
@@ -75,18 +74,24 @@ async function fetchNwsJson(url) {
   return response.json();
 }
 
+function notableWind(windSpeed) {
+  if (typeof windSpeed !== 'string') return false;
+  const speeds = [...windSpeed.matchAll(/\d+/g)].map((match) => Number.parseInt(match[0], 10));
+  return speeds.some((speed) => speed >= 20);
+}
+
+function friendlyForecast(text) {
+  if (typeof text !== 'string' || !text.trim()) return '';
+  return text.trim().toLowerCase();
+}
+
 function formatWeatherPeriod(period) {
-  const parts = [];
-  if (Number.isFinite(period?.temperature)) {
-    parts.push(`${period.temperature}°${period.temperatureUnit || 'F'}`);
-  }
-  if (typeof period?.shortForecast === 'string' && period.shortForecast.trim()) {
-    parts.push(period.shortForecast.trim().toLowerCase());
-  }
-  if (typeof period?.windSpeed === 'string' && period.windSpeed.trim()) {
-    parts.push(`wind ${period.windSpeed.trim()}${period.windDirection ? ` ${period.windDirection}` : ''}`);
-  }
-  return parts.join(', ');
+  const temperature = Number.isFinite(period?.temperature) ? `about ${period.temperature}°` : '';
+  const forecast = friendlyForecast(period?.shortForecast);
+  const basics = [temperature, forecast].filter(Boolean).join(' and ');
+  if (!basics) return '';
+  if (notableWind(period?.windSpeed)) return `${basics}. It also looks windy, so give yourself a little extra travel time`;
+  return basics;
 }
 
 async function buffaloWeather() {
@@ -99,7 +104,7 @@ async function buffaloWeather() {
   const period = forecast?.properties?.periods?.[0];
   const conditions = formatWeatherPeriod(period);
   if (!conditions) throw new Error('Weather.gov forecast response did not include usable conditions');
-  const answer = `Near BUMA in Buffalo right now: ${conditions}. Weather can change quickly, so check again before you head out, especially if travel conditions look rough.`;
+  const answer = `Near the academy, it’s ${conditions}. Weather can shift, so it’s worth checking again before you head over.`;
   const value = {
     answer,
     sources: [{ id: 'weather', source: 'National Weather Service', url: 'https://api.weather.gov' }],
@@ -157,7 +162,7 @@ function receptionistRoute(message) {
     return { answer: "I’m BUMA’s virtual receptionist. I can answer from approved public academy info, and I use DeepSeek only when a question needs a little extra help. I’m not human and I can’t complete bookings, but I can point you to the right next step.", sourceIds: [], actions: [] };
   }
   if (/\b(what time is it|current time|time now|today's date|todays date|what day is it|current date)\b/.test(normalized)) {
-    return { answer: `In Buffalo, it’s ${buffaloTime()}. Class times can still change, so please confirm with the academy before your first visit.`, sourceIds: [], actions: ['schedule'] };
+    return { answer: `It’s ${buffaloTime()} in Buffalo. If you’re checking class timing, I can show the published schedule too.`, sourceIds: [], actions: ['schedule'] };
   }
   if (isWeatherQuestion(normalized)) return { weather: true };
   if (/\b(how are you|how's it going|hows it going|how are things)\b/.test(normalized)) {

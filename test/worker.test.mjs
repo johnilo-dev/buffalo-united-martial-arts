@@ -66,7 +66,8 @@ test('answers harmless receptionist small talk locally without DeepSeek', async 
   const payload = await response.json();
   assert.equal(response.status, 200);
   assert.equal(payload.mode, 'receptionist');
-  assert.match(payload.answer, /In Buffalo/);
+  assert.match(payload.answer, / in Buffalo/);
+  assert.doesNotMatch(payload.answer, /\b(EST|EDT)\b/);
   assert.equal(aiRateCalls, 0);
 });
 
@@ -109,7 +110,8 @@ test('answers live weather questions from the National Weather Service without D
     const secondPayload = await second.json();
     assert.equal(first.status, 200);
     assert.equal(firstPayload.mode, 'receptionist');
-    assert.match(firstPayload.answer, /Near BUMA in Buffalo right now: 72°F, mostly cloudy, wind 8 mph W/);
+    assert.match(firstPayload.answer, /Near the academy, it’s about 72° and mostly cloudy/);
+    assert.doesNotMatch(firstPayload.answer, /8 mph|wind W/);
     assert.deepEqual(firstPayload.sources.map((source) => source.id), ['weather']);
     assert.equal(secondPayload.answer, firstPayload.answer);
     assert.equal(calls.length, 2);
