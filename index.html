@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Buffalo United Martial Arts — Brazilian Jiu-Jitsu, Muay Thai, MMA, Judo, Sambo, boxing and kids martial arts in downtown Buffalo." />
   <meta name="theme-color" content="#080a0c" />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta name="buma-chat-api" content="https://buma-chat-api.klientohq.workers.dev" />
+  <meta property="og:title" content="Buffalo United Martial Arts | Train Together. Rise Together." />
+  <meta property="og:description" content="Explore Buffalo United Martial Arts programs, published class times, instructors and first-visit information." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://johnilo-dev.github.io/buffalo-united-martial-arts/" />
+  <meta property="og:image" content="https://johnilo-dev.github.io/buffalo-united-martial-arts/assets/hero.webp" />
+  <meta name="twitter:card" content="summary_large_image" />
   <title>Buffalo United Martial Arts | Train Together. Rise Together.</title>
   <link rel="icon" type="image/webp" href="assets/logo.webp" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -27,7 +36,7 @@
       <a href="#coaches">Coaches</a>
       <a href="#community">Community</a>
     </nav>
-    <a class="button button-small header-cta" href="tel:+17166717197">Start training <span aria-hidden="true">↗</span></a>
+    <a class="button button-small header-cta" href="tel:+17166717197">Call about a class <span aria-hidden="true">↗</span></a>
   </header>
 
   <main id="main">
@@ -39,7 +48,7 @@
         <h1 id="hero-title">Find your<br /><em>fight family.</em></h1>
         <p class="hero-copy">Real coaching. Real community. Brazilian Jiu-Jitsu, Muay Thai and complete martial arts training for beginners, families and competitors.</p>
         <div class="hero-actions">
-          <a class="button" href="tel:+17166717197">Book your first class <span aria-hidden="true">↗</span></a>
+          <a class="button" href="tel:+17166717197">Call about your first class <span aria-hidden="true">↗</span></a>
           <button class="text-button ask-buma" type="button">Ask BUMA anything <span aria-hidden="true">↘</span></button>
         </div>
       </div>
@@ -167,16 +176,16 @@
     <a class="brand footer-brand" href="#top"><img src="assets/logo.webp" alt="" /><span><strong>Buffalo United</strong><small>Martial Arts</small></span></a>
     <p>Train together. Rise together.</p>
     <div><a href="https://www.facebook.com/716mma" target="_blank" rel="noopener">Facebook ↗</a><a href="https://www.instagram.com/buffalo_united_martial_arts/" target="_blank" rel="noopener">Instagram ↗</a><a href="https://buffalounitedmartialarts.com/home" target="_blank" rel="noopener">Current site ↗</a></div>
-    <small>Website concept · Research verified September 5, 2026</small>
+    <small>Stakeholder preview · Published information reviewed September 5, 2026</small>
   </footer>
 
   <button class="chat-launcher" type="button" aria-label="Open BUMA assistant" aria-expanded="false">
     <span class="chat-pulse"></span><span class="chat-label"><small>Questions?</small>Ask BUMA</span><i>↗</i>
   </button>
 
-  <aside class="chat-widget" aria-label="BUMA information assistant" aria-hidden="true">
+  <aside class="chat-widget" role="dialog" aria-modal="false" aria-labelledby="chat-title" aria-describedby="chat-disclosure" aria-hidden="true">
     <header class="chat-header">
-      <strong>Buffalo United</strong>
+      <strong id="chat-title">Buffalo United</strong>
       <div class="chat-faces" aria-hidden="true"><img src="assets/instructor-josh.webp" alt="" /><img src="assets/instructor-keith.webp" alt="" /><img src="assets/instructor-larry.webp" alt="" /></div>
       <button class="chat-reset" type="button" aria-label="Start a new conversation">↻</button>
       <button class="chat-close" type="button" aria-label="Close assistant">×</button>
@@ -193,12 +202,13 @@
       </div>
     </section>
     <div class="chat-messages" id="chat-messages" role="log" aria-live="polite"></div>
-    <form class="chat-form" id="chat-form">
+    <form class="chat-form" id="chat-form" aria-busy="false">
       <label class="sr-only" for="chat-input">Ask a question about Buffalo United Martial Arts</label>
-      <textarea id="chat-input" rows="1" placeholder="How can I help you?" autocomplete="off"></textarea>
+      <textarea id="chat-input" rows="1" maxlength="500" placeholder="How can I help you?" autocomplete="off"></textarea>
       <button type="submit" aria-label="Send question"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M14 6l6 6-6 6" /></svg></button>
     </form>
-    <p class="chat-disclaimer">Grounded in published academy information</p>
+    <p class="chat-status-line" id="chat-status" role="status" aria-live="polite">Ready</p>
+    <p class="chat-disclaimer" id="chat-disclosure">Automated assistant grounded in published academy information. Do not share private or medical information.</p>
     <nav class="chat-nav" aria-label="Assistant navigation">
       <button type="button" class="chat-home active"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" /></svg><span>Home</span></button>
       <button type="button" class="chat-messages-tab"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" /><path class="message-lines" d="M8 9h8M8 13h6" /></svg><span>Messages</span></button>
@@ -207,7 +217,6 @@
     </nav>
   </aside>
 
-  <script src="knowledge.js"></script>
-  <script src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>

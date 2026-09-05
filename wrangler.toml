@@ -1,0 +1,7 @@
+name = "buma-chat-api"
+main = "worker/src/index.js"
+compatibility_date = "2026-09-05"
+workers_dev = true
+
+[vars]
+ALLOWED_ORIGINS = "https://johnilo-dev.github.io,http://localhost:4173,http://127.0.0.1:4173"

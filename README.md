@@ -1,6 +1,6 @@
-# Buffalo United Martial Arts website concept
+# Buffalo United Martial Arts website
 
-A responsive, dependency-free website concept for Buffalo United Martial Arts Academy. Open `index.html` directly or serve this folder with any static web server.
+A responsive website and guarded information assistant for Buffalo United Martial Arts Academy. Serve the folder with a static web server; the frontend uses ES modules and should not be opened through `file://`.
 
 ## Included
 
@@ -11,19 +11,38 @@ A responsive, dependency-free website concept for Buffalo United Martial Arts Ac
 - Explicit handling of uncertain information, including unpublished prices and the two phone numbers found across the official page and Google listing
 - Keyboard navigation, semantic landmarks, reduced-motion support and mobile layout
 
-## RAG architecture
+## Local development
 
-The prototype implements retrieval locally in `knowledge.js` and `app.js`: questions are normalized, matched to weighted academy passages and answered only from the highest-scoring evidence. This makes the demo functional without an API key and prevents invented prices or policies.
+```sh
+python -m http.server 4173
+```
 
-For production, keep `knowledge.js` as the seed corpus but move retrieval and generation behind a server endpoint. Recommended flow:
+Then open `http://localhost:4173/`. Run `npm run verify` before committing.
+
+## Assistant architecture
+
+The browser calls a Cloudflare Worker through the configured Worker URL. The Worker retrieves relevant passages from `knowledge.js` and uses `deepseek-v4-flash` only when the encrypted `DEEPSEEK_API_KEY` secret is present. If the model or provider is unavailable, it returns a deterministic answer from the retrieved public information.
+
+Request flow:
 
 1. Crawl approved official pages and owner-supplied documents.
-2. Chunk and embed them in a vector database.
-3. Retrieve the top relevant chunks with metadata.
-4. Generate an answer with a strict “use only retrieved context” prompt.
-5. Return citations and a low-confidence fallback to contact the academy.
+2. Retrieve the most relevant approved public passages on the Worker.
+3. Apply deterministic safety responses for emergencies, medical questions, prices and bookings.
+4. Generate a short answer using only retrieved context when the model is available.
+5. Return citations or a grounded deterministic fallback.
 
 Never expose an LLM API key in browser JavaScript.
+
+### Worker deployment
+
+`wrangler.toml` contains non-secret configuration. Add a newly generated key directly to Cloudflare—not to chat, source files or command history:
+
+```sh
+npx wrangler secret put DEEPSEEK_API_KEY
+npx wrangler deploy
+```
+
+The personal GitHub Pages deployment is intentionally marked `noindex` while it is used for stakeholder testing. Remove that directive only when the final domain and content are approved.
 
 ## Research caveats
 
