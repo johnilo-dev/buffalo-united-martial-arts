@@ -6,7 +6,7 @@ A responsive website and guarded information assistant for Buffalo United Martia
 
 - Responsive editorial landing page using imagery currently published by the academy
 - Programs, published schedule, instructor team, review proof and location/contact sections
-- Bottom-right “Ask BUMA” assistant with local retrieval over a curated knowledge base
+- Bottom-right “Ask BUMA” virtual receptionist with local retrieval over a curated knowledge base
 - Grounded source links on every retrieved answer
 - Explicit handling of uncertain information, including unpublished prices and the two phone numbers found across the official page and Google listing
 - Keyboard navigation, semantic landmarks, reduced-motion support and mobile layout
@@ -27,9 +27,12 @@ Request flow:
 
 1. Crawl approved official pages and owner-supplied documents.
 2. Retrieve the most relevant approved public passages on the Worker.
-3. Apply deterministic safety responses for emergencies, medical questions, prices and bookings.
-4. Generate a short answer using only retrieved context when the model is available.
-5. Return citations or a grounded deterministic fallback.
+3. Handle greetings, assistant identity, services, emergencies, medical questions, prices and bookings through deterministic receptionist routes.
+4. Use a maximum of six recent in-memory messages to resolve follow-up questions; conversation history is not persisted.
+5. Generate a short receptionist answer using only retrieved context when the model is available.
+6. Return validated citations, useful call/email/schedule/directions actions, or a grounded deterministic fallback.
+
+The Worker also uses a dedicated Cloudflare rate-limit binding for the chat endpoint. Its in-memory limiter is retained only as a local-development fallback.
 
 Never expose an LLM API key in browser JavaScript.
 

@@ -5,3 +5,11 @@ workers_dev = true
 
 [vars]
 ALLOWED_ORIGINS = "https://johnilo-dev.github.io,http://localhost:4173,http://127.0.0.1:4173"
+
+[[ratelimits]]
+name = "BUMA_RATE_LIMITER"
+namespace_id = "764920381"
+
+  [ratelimits.simple]
+  limit = 20
+  period = 60

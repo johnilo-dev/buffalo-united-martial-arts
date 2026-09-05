@@ -108,6 +108,7 @@ const visitTab = document.querySelector('.chat-visit');
 const statusLine = document.querySelector('#chat-status');
 const endpoint = document.querySelector('meta[name="buma-chat-api"]')?.content.trim() || '';
 let busy = false;
+const conversationHistory = [];
 
 function setChat(open) {
   widget.classList.toggle('open', open);
@@ -125,7 +126,7 @@ document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' && widget.classList.contains('open')) setChat(false);
 });
 
-const stopWords = new Set('a an and are as at be by can do does for from how i in is it me my of on or our the their there this to what when where which who with you your'.split(' '));
+const stopWords = new Set('a about an and are as at be by can do does for from how i in is it me my no not of on or our the their there this to use what when where which who with you your'.split(' '));
 const aliases = {
   'brazilian jiu jitsu': 'bjj',
   'jiu-jitsu': 'bjj',
@@ -141,7 +142,11 @@ const aliases = {
   fees: 'price',
   rates: 'price',
   hours: 'schedule',
+  service: 'program',
+  services: 'programs',
+  offerings: 'programs',
 };
+const genericTerms = new Set(['class', 'classes', 'program', 'programs', 'training']);
 
 function normalize(text) {
   let output = text.toLowerCase();
@@ -153,20 +158,23 @@ function retrieve(query) {
   const normalized = normalize(query);
   const terms = normalized.split(' ').filter((word) => word.length > 1 && !stopWords.has(word));
   return BUMA_KNOWLEDGE.map((document) => {
-    const haystack = normalize(`${document.title} ${document.text} ${document.keywords.join(' ')}`);
+    const titleWords = new Set(normalize(document.title).split(' '));
+    const documentWords = new Set(normalize(`${document.title} ${document.text} ${document.keywords.join(' ')}`).split(' '));
     let score = 0;
     terms.forEach((term) => {
+      if (genericTerms.has(term)) return;
       if (document.keywords.some((keyword) => normalize(keyword) === term)) score += 4;
-      if (normalize(document.title).includes(term)) score += 3;
-      if (haystack.includes(term)) score += 1;
+      if (titleWords.has(term)) score += 3;
+      if (documentWords.has(term)) score += 1;
     });
     document.keywords.forEach((keyword) => {
       if (normalized.includes(normalize(keyword)) && normalize(keyword).includes(' ')) score += 7;
     });
+    if (/\b(saturday|sunday|weekend)\b/.test(normalized) && document.id === 'weekend') score += 6;
     if (normalized.includes('schedule') && document.category === 'schedule') score += 2;
     if ((normalized.includes('beginner') || normalized.includes('new')) && document.id === 'overview') score += 6;
     return { ...document, score };
-  }).filter((document) => document.score > 0).sort((a, b) => b.score - a.score).slice(0, 3);
+  }).filter((document) => document.score >= 4).sort((a, b) => b.score - a.score).slice(0, 3);
 }
 
 function composeLocal(query, documents) {
@@ -177,8 +185,26 @@ function composeLocal(query, documents) {
   if (/\b(injury|injured|pain|medical|diagnose|concussion|medicine)\b/.test(normalized)) {
     return 'I can’t provide medical advice. For urgent symptoms, contact emergency services. Otherwise, speak with a qualified healthcare professional and contact the academy directly before training.';
   }
+  if (/\b(deepseek|chatgpt|language model)\b/.test(normalized) || /\b(who|what) are you\b/.test(normalized) || /\bare you (an |a )?(ai|bot|human)\b/.test(normalized)) {
+    return "I’m BUMA’s automated virtual receptionist. I use DeepSeek to help answer questions from approved public academy information, with built-in responses available if the AI service is unavailable. I’m not a human and I can’t complete bookings.";
+  }
+  if (/\b(where are you|where is buma|located|location|address|directions|get there)\b/.test(normalized)) {
+    return 'Buffalo United Martial Arts is at 359 Ganson Street, Buffalo, New York 14203, in the Buffalo RiverWorks area downtown.';
+  }
+  if (/\b(what.*wear|what.*bring|equipment|gear|waiver|parking|age requirement|how old)\b/.test(normalized)) {
+    return "That first-visit detail isn’t included in the approved academy information yet, so I don’t want to guess. Please call or email BUMA to confirm before you arrive.";
+  }
+  if (/^(show|view|see)? ?(the )?(class )?schedule$/.test(normalized)) {
+    return 'You can view BUMA’s published class schedule below. Class times can change, so please confirm with the academy before your first visit.';
+  }
+  if (/\b(services|offerings|programs)\b/.test(normalized) || /\bwhat (class|classes|training)\b/.test(normalized) || /\bwhat do you (offer|teach)\b/.test(normalized)) {
+    return 'Hi! Buffalo United offers Brazilian Jiu-Jitsu, Muay Thai, MMA, kids martial arts, Judo, Sambo, boxing, submission wrestling and Kru Fit cardio. Would you like class times or help choosing a program?';
+  }
+  if (/^(hi|hello|hey|good morning|good afternoon|good evening)( there)?$/.test(normalized)) {
+    return 'Hi! I’m BUMA’s virtual receptionist. I can help with programs, published class times, instructors, location and preparing for your first visit. What would you like to know?';
+  }
   if (!documents.length) {
-    return "I couldn't verify that from the published academy information. I can help with programs, published class times, instructors, location and contact details. For anything else, contact the academy directly.";
+    return "I don't have verified information about that yet. I can help with BUMA’s programs, published class times, instructors, location and contact details, or connect you with the academy for anything else.";
   }
   if (normalized.includes('beginner') || normalized.includes('never trained') || normalized.includes('new')) {
     return 'BUMA’s published information says its programs serve beginners through experienced martial artists. Fundamentals and all-level sessions are listed, but contact the academy before your first visit so staff can recommend the right class.';
@@ -198,7 +224,16 @@ function composeLocal(query, documents) {
   return `${documents[0].text}${documents[0].category === 'schedule' ? ' Schedules can change, so confirm before your first visit.' : ''}`;
 }
 
-function appendMessage(text, role, sources = [], note = '') {
+function safeActionHref(href) {
+  try {
+    const url = new URL(href, location.href);
+    return ['https:', 'http:', 'tel:', 'mailto:'].includes(url.protocol) ? url.href : '';
+  } catch {
+    return '';
+  }
+}
+
+function appendMessage(text, role, sources = [], note = '', actions = []) {
   const wrap = document.createElement('div');
   wrap.className = `message ${role}`;
   const paragraph = document.createElement('p');
@@ -218,6 +253,23 @@ function appendMessage(text, role, sources = [], note = '') {
     });
     messages.appendChild(sourceList);
   }
+  if (role === 'assistant' && actions.length) {
+    const actionList = document.createElement('div');
+    actionList.className = 'chat-actions';
+    actions.slice(0, 3).forEach((action) => {
+      const href = safeActionHref(action?.href || '');
+      if (!href || typeof action?.label !== 'string') return;
+      const anchor = document.createElement('a');
+      anchor.href = href;
+      anchor.textContent = action.label.slice(0, 40);
+      if (href.startsWith('http')) {
+        anchor.target = '_blank';
+        anchor.rel = 'noopener noreferrer';
+      }
+      actionList.appendChild(anchor);
+    });
+    if (actionList.children.length) messages.appendChild(actionList);
+  }
   if (note) {
     const noteElement = document.createElement('p');
     noteElement.className = 'chat-response-note';
@@ -235,7 +287,7 @@ function setBusy(nextBusy, status = 'Ready') {
   statusLine.textContent = status;
 }
 
-async function requestAssistant(message) {
+async function requestAssistant(message, history) {
   if (!endpoint) throw new Error('No assistant endpoint configured');
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12000);
@@ -243,7 +295,7 @@ async function requestAssistant(message) {
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ message, history }),
       signal: controller.signal,
     });
     if (!response.ok) throw new Error(`Assistant returned ${response.status}`);
@@ -259,7 +311,9 @@ async function ask(question) {
   const clean = question.trim().slice(0, 500);
   if (!clean || busy) return;
   widget.classList.add('in-conversation');
+  const priorHistory = conversationHistory.slice(-6);
   appendMessage(clean, 'user');
+  conversationHistory.push({ role: 'user', content: clean });
   input.value = '';
   input.style.height = 'auto';
   suggestions.style.display = 'none';
@@ -271,14 +325,23 @@ async function ask(question) {
   setBusy(true, 'Checking approved information…');
 
   try {
-    const result = await requestAssistant(clean);
+    const result = await requestAssistant(clean, priorHistory);
     typing.remove();
-    appendMessage(result.answer, 'assistant', result.sources || [], result.mode === 'retrieval' ? 'Answered from verified site information.' : 'AI-assisted answer checked against retrieved sources.');
+    const note = result.mode === 'ai'
+      ? 'AI-assisted answer checked against retrieved sources.'
+      : result.mode === 'receptionist'
+        ? 'Automated receptionist response.'
+        : 'Answered from verified site information.';
+    appendMessage(result.answer, 'assistant', result.sources || [], note, result.actions || []);
+    conversationHistory.push({ role: 'assistant', content: result.answer.slice(0, 500) });
     setBusy(false, 'Ready');
   } catch {
     typing.remove();
-    const documents = retrieve(clean);
-    appendMessage(composeLocal(clean, documents), 'assistant', documents, 'Live assistant unavailable; using the on-page verified information.');
+    const contextQuery = [...priorHistory.filter((item) => item.role === 'user').slice(-2).map((item) => item.content), clean].join(' ');
+    const documents = retrieve(contextQuery);
+    const fallback = composeLocal(clean, documents);
+    appendMessage(fallback, 'assistant', documents.slice(0, 1), 'Live assistant unavailable; using the on-page verified information.');
+    conversationHistory.push({ role: 'assistant', content: fallback.slice(0, 500) });
     setBusy(false, 'Ready · local information mode');
   }
   input.focus();
@@ -303,6 +366,7 @@ suggestions.querySelectorAll('button').forEach((button) => button.addEventListen
 function returnHome() {
   if (busy) return;
   messages.replaceChildren();
+  conversationHistory.length = 0;
   widget.classList.remove('in-conversation');
   suggestions.style.display = 'grid';
   input.value = '';
@@ -321,3 +385,7 @@ messagesTab.addEventListener('click', () => {
 });
 scheduleTab.addEventListener('click', () => ask('Show the class schedule'));
 visitTab.addEventListener('click', () => setChat(false));
+messages.addEventListener('click', (event) => {
+  const link = event.target.closest('.chat-actions a');
+  if (link && new URL(link.href, location.href).hash === '#schedule') setChat(false);
+});

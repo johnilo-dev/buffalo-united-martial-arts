@@ -31,6 +31,7 @@ footer{background:#050607;color:#fff;padding:40px 5vw;display:grid;grid-template
 /* Production chat states */
 .chat-status-line{margin:7px 18px 0;color:#444a50;font-size:9px;font-weight:700;letter-spacing:.06em;text-align:center;text-transform:uppercase}
 .chat-response-note{margin:-5px 4px 12px!important;color:#555c62;font-size:9px!important;line-height:1.4!important}
+.chat-actions{display:flex;flex-wrap:wrap;gap:7px;margin:0 2px 13px}.chat-actions a{display:inline-flex;min-height:34px;align-items:center;border:1px solid #9a263e;border-radius:18px;background:#fff;padding:7px 11px;color:#7b1830;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em}.chat-actions a:hover{background:#7b1830;color:#fff}.chat-reset svg,.chat-close svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .chat-form:focus-within{border-color:#20252a;box-shadow:0 0 0 3px rgba(255,255,255,.85),0 0 0 5px rgba(20,24,27,.22)}
 .chat-form button:disabled{cursor:wait;filter:grayscale(.5);opacity:.6;transform:none}
 .chat-form textarea:disabled{cursor:wait;background:#f1f2f2}

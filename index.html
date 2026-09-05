@@ -7,6 +7,7 @@
   <meta name="theme-color" content="#080a0c" />
   <meta name="robots" content="noindex, nofollow" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; base-uri 'self'; form-action 'self'; object-src 'none'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; frame-src https://www.google.com; connect-src 'self' https://buma-chat-api.klientohq.workers.dev" />
   <meta name="buma-chat-api" content="https://buma-chat-api.klientohq.workers.dev" />
   <meta property="og:title" content="Buffalo United Martial Arts | Train Together. Rise Together." />
   <meta property="og:description" content="Explore Buffalo United Martial Arts programs, published class times, instructors and first-visit information." />
@@ -19,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=20260905-2" />
+  <link rel="stylesheet" href="styles.css?v=20260905-3" />
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -187,12 +188,12 @@
     <header class="chat-header">
       <strong id="chat-title">Buffalo United</strong>
       <div class="chat-faces" aria-hidden="true"><img src="assets/instructor-josh.webp" alt="" /><img src="assets/instructor-keith.webp" alt="" /><img src="assets/instructor-larry.webp" alt="" /></div>
-      <button class="chat-reset" type="button" aria-label="Start a new conversation">↻</button>
-      <button class="chat-close" type="button" aria-label="Close assistant">×</button>
+      <button class="chat-reset" type="button" aria-label="Start a new conversation"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v6h6M5.6 15a7 7 0 1 0 1-8.4L4 10" /></svg></button>
+      <button class="chat-close" type="button" aria-label="Close assistant"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg></button>
     </header>
     <section class="chat-welcome" id="chat-welcome" aria-label="Start a conversation">
       <h2>Buffalo United<br />Martial Arts</h2>
-      <p>Ask about classes, schedules, coaches, kids training, and your first visit.</p>
+      <p>Chat with BUMA’s virtual receptionist about classes, schedules, coaches, kids training, and your first visit.</p>
       <div class="chat-prompt-label">Quick prompts:</div>
       <div class="chat-suggestions" id="chat-suggestions">
         <button type="button"><span>✦</span> What classes are available?</button>
@@ -208,7 +209,7 @@
       <button type="submit" aria-label="Send question"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15M14 6l6 6-6 6" /></svg></button>
     </form>
     <p class="chat-status-line" id="chat-status" role="status" aria-live="polite">Ready</p>
-    <p class="chat-disclaimer" id="chat-disclosure">Automated assistant grounded in published academy information. Do not share private or medical information.</p>
+    <p class="chat-disclaimer" id="chat-disclosure">Automated virtual receptionist grounded in published academy information. It cannot complete bookings. Do not share private or medical information.</p>
     <nav class="chat-nav" aria-label="Assistant navigation">
       <button type="button" class="chat-home active"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" /></svg><span>Home</span></button>
       <button type="button" class="chat-messages-tab"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1Z" /><path class="message-lines" d="M8 9h8M8 13h6" /></svg><span>Messages</span></button>
