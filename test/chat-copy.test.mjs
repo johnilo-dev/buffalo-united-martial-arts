@@ -1,7 +1,23 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { handleRequest } from '../worker/src/index.js';
-import { customerReply } from '../chat-copy.js';
+import { handleRequest, retrieve } from '../worker/src/index.js';
+test('teacher questions retrieve the known instructor information', () => {
+  assert.ok(retrieve('Who teaches judo?').some(item => item.id === 'coaches'));
+});
+import { customerReply, followupQuery } from '../chat-copy.js';
+
+test('a new topic does not inherit an earlier price question', () => {
+  assert.equal(followupQuery('Who teaches judo?', [{role:'user',content:'How much are kids classes?'}]), 'Who teaches judo?');
+});
+test('follow-up retains boxing without claiming a Saturday class', () => {
+  const query = followupQuery('What about Saturday?', [{role:'user',content:'When is Sunday boxing?'}]);
+  assert.match(customerReply(query.toLowerCase()).answer, /not that day/);
+});
+test('schedule and price are answered together', () => {
+  const reply = customerReply('when are kids classes and how much do they cost');
+  assert.match(reply.answer, /5:30 PM/);
+  assert.match(reply.answer, /don’t have current prices/);
+});
 
 async function answer(message) {
   const result = await handleRequest(new Request('http://localhost/chat', {

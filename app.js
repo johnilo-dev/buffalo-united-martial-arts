@@ -1,5 +1,5 @@
 import { BUMA_KNOWLEDGE } from './knowledge.js';
-import { customerReply } from './chat-copy.js';
+import { customerReply, followupQuery } from './chat-copy.js';
 
 const scheduleData = {
   weekday: [
@@ -400,13 +400,13 @@ async function ask(question) {
     conversationHistory.push({ role: 'assistant', content: result.answer.slice(0, 500) });
     setBusy(false, 'Ready');
   } catch {
-    const contextQuery = [...priorHistory.filter((item) => item.role === 'user').slice(-2).map((item) => item.content), clean].join(' ');
+    const contextQuery = followupQuery(clean, priorHistory);
     const documents = retrieve(contextQuery);
-    const fallback = composeLocal(clean, documents);
+    const fallback = composeLocal(contextQuery, documents);
     await minimumReplyDelay;
     typing.remove();
     const safety = /\b(911|emergency|unconscious|not breathing|severe bleeding|immediate danger|injury|injured|pain|medical|diagnose|concussion|medicine)\b/.test(normalize(clean));
-    const friendly = safety ? null : customerReply(normalize(clean));
+    const friendly = safety ? null : customerReply(normalize(contextQuery));
     const fallbackSources = safety ? [] : friendly ? BUMA_KNOWLEDGE.filter(item => friendly.sourceIds.includes(item.id)) : documents.slice(0, 1);
     const actionOptions = { leadForm: {label: 'Request first class', href: leadFormUrl}, call: {label: 'Call the academy', href: 'tel:+17166717197'}, schedule: {label: 'View class schedule', href: '#schedule'} };
     const fallbackActions = safety ? [] : friendly ? friendly.actions.map(key => actionOptions[key]).filter(Boolean) : localActions(clean, documents);
@@ -414,7 +414,7 @@ async function ask(question) {
     conversationHistory.push({ role: 'assistant', content: fallback.slice(0, 500) });
     setBusy(false, 'Ready');
   }
-  input.focus();
+  if (widget.classList.contains('open')) input.focus();
 }
 
 form.addEventListener('submit', (event) => {

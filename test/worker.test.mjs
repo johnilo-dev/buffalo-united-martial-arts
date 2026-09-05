@@ -351,8 +351,9 @@ test('uses limited recent conversation to resolve a follow-up', async () => {
       ],
     }), { DEEPSEEK_API_KEY: 'test-secret-value' });
     const payload = await response.json();
-    assert.equal(payload.mode, 'ai');
-    assert.match(upstreamBody.messages[1].content, /When is Sunday boxing/);
+    assert.equal(payload.mode, 'receptionist');
+    assert.equal(upstreamBody, undefined);
+    assert.match(payload.answer, /boxing listed for Sunday at 12 PM, not that day/);
     assert.deepEqual(payload.sources.map((source) => source.id), ['weekend']);
   } finally {
     globalThis.fetch = originalFetch;

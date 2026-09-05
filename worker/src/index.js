@@ -1,5 +1,5 @@
 import { BUMA_KNOWLEDGE } from '../../knowledge.js';
-import { customerReply } from '../../chat-copy.js';
+import { customerReply, followupQuery } from '../../chat-copy.js';
 
 const MAX_MESSAGE_LENGTH = 500;
 const MAX_HISTORY_MESSAGES = 6;
@@ -509,7 +509,8 @@ export async function handleRequest(request, env = {}) {
 
   const history = cleanHistory(payload?.history);
   const visitorKey = clientKey(payload?.visitorId);
-  const direct = receptionistRoute(message);
+  const resolvedMessage = followupQuery(message, history);
+  const direct = receptionistRoute(resolvedMessage);
   if (direct) {
     if (direct.weather) {
       try {
@@ -532,7 +533,7 @@ export async function handleRequest(request, env = {}) {
     }, 200, origin, true);
   }
 
-  const contextQuery = [...history.filter((item) => item.role === 'user').slice(-2).map((item) => item.content), message].join(' ');
+  const contextQuery = resolvedMessage;
   const documents = retrieve(contextQuery);
   if (!env.DEEPSEEK_API_KEY || !documents.length) {
     return response({
