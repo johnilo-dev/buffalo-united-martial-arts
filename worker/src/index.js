@@ -203,6 +203,17 @@ export class BumaUsageBudget {
     this.state = state;
   }
 
+  async fetch(request) {
+    if (request.method !== 'POST') {
+      return new Response(JSON.stringify({ success: false }), { status: 405 });
+    }
+    const payload = await request.json();
+    const result = await this.checkAndRecord(payload);
+    return new Response(JSON.stringify(result), {
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+    });
+  }
+
   async checkAndRecord({ visitorKey, ip, now, browserLimit, ipLimit, globalLimit }) {
     const today = dayKey(now);
     const storage = this.state.storage;
@@ -307,14 +318,25 @@ async function withinAiDailyBudget(request, env, visitorKey) {
     globalLimit: numberSetting(env.DAILY_GLOBAL_AI_LIMIT, DAILY_GLOBAL_AI_LIMIT),
   };
   if (env.BUMA_USAGE_BUDGET?.idFromName && env.BUMA_USAGE_BUDGET?.get) {
-    const object = env.BUMA_USAGE_BUDGET.get(env.BUMA_USAGE_BUDGET.idFromName('daily-ai-budget'));
-    const result = await object.checkAndRecord({
-      visitorKey,
-      ip: ipKey(request),
-      now: Date.now(),
-      ...limits,
-    });
-    return result.success;
+    try {
+      const object = env.BUMA_USAGE_BUDGET.get(env.BUMA_USAGE_BUDGET.idFromName('daily-ai-budget'));
+      const objectResponse = await object.fetch(new Request('https://buma-usage-budget/check', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          visitorKey,
+          ip: ipKey(request),
+          now: Date.now(),
+          ...limits,
+        }),
+      }));
+      if (objectResponse.ok) {
+        const result = await objectResponse.json();
+        return result.success === true;
+      }
+    } catch {
+      // Fall through to the isolate-local budget so a storage issue does not break chat.
+    }
   }
   const today = dayKey();
   const browserKey = `browser:${today}:${visitorKey}`;
