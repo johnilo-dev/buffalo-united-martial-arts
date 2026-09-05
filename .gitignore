@@ -1,5 +1,7 @@
 .dev.vars
 .wrangler/
+.agents/
+.hallmark/
 node_modules/
 playwright-report/
 test-results/
