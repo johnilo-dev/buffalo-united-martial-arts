@@ -243,7 +243,7 @@ function composeLocal(query, documents) {
     return 'You can view BUMA’s published class schedule below. Class times can change, so please confirm with the academy before your first visit.';
   }
   if (/\b(book|booking|reserve|reservation|appointment|register|registration|enroll|enrollment|join|sign up|signup|first class|try a class|try class|interested)\b/.test(normalized)) {
-    return 'I can’t confirm a booking from chat, but the best next step is to send a first-class request. It asks for the basics so BUMA can follow up with the right program, timing and next steps.';
+    return 'Great — the easiest way to get started is to fill out the first-class request form. Just click “Request first class,” share the basics, and BUMA can follow up with the right program, timing and next steps.';
   }
   if (/\b(price|pricing|cost|membership|trial|fee|discount)\b/.test(normalized)) {
     return "Current prices and trial terms aren’t published in the approved information, so I don’t want to guess. If you send a first-class request, BUMA can follow up with the current rates and the best option for the program you’re interested in.";
@@ -264,7 +264,7 @@ function composeLocal(query, documents) {
     return "Current prices and trial terms aren’t published in the approved information, so I don’t want to guess. If you send a first-class request, BUMA can follow up with the current rates and the best option for the program you’re interested in.";
   }
   if (normalized.includes('book') || normalized.includes('reserve') || normalized.includes('appointment')) {
-    return 'I can’t confirm a reservation or booking, but I can help you take the next step. Please send a first-class request so BUMA can follow up with the right program, timing and next steps.';
+    return 'Great — the easiest way to get started is to fill out the first-class request form. Just click “Request first class,” share the basics, and BUMA can follow up with the right program, timing and next steps.';
   }
   if (normalized.includes('phone') || normalized.includes('number') || normalized.includes('contact')) {
     return 'The current official site displays (716) 671-7197 and info@fightfamily.com. Its click-to-call link and the supplied Google listing use (716) 563-0720, so the primary number still needs owner confirmation.';

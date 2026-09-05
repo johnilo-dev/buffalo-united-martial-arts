@@ -155,7 +155,7 @@ test('routes booking, registration and enrollment intent to the first-class requ
   const payload = await response.json();
   assert.equal(response.status, 200);
   assert.equal(payload.mode, 'receptionist');
-  assert.match(payload.answer, /can’t confirm a booking|first-class request/i);
+  assert.match(payload.answer, /Great|Request first class|first-class request/i);
   assert.deepEqual(payload.sources, []);
   assert.ok(payload.actions.some((action) => action.label === 'Request first class'));
 });

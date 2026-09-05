@@ -157,7 +157,7 @@ function receptionistRoute(message) {
     return { answer: "That first-visit detail isn’t included in the approved academy information yet, so I don’t want to guess. You can send a first-class request or call BUMA to confirm before you arrive.", sourceIds: [], actions: ['leadForm', 'call', 'email'] };
   }
   if (/\b(book|booking|reserve|reservation|appointment|register|registration|enroll|enrollment|join|sign up|signup|first class|try a class|try class|interested)\b/.test(normalized)) {
-    return { answer: 'I can’t confirm a booking from chat, but the best next step is to send a first-class request. It asks for the basics so BUMA can follow up with the right program, timing and next steps.', sourceIds: [], actions: ['leadForm', 'call', 'schedule'] };
+    return { answer: 'Great — the easiest way to get started is to fill out the first-class request form. Just click “Request first class,” share the basics, and BUMA can follow up with the right program, timing and next steps.', sourceIds: [], actions: ['leadForm', 'call', 'schedule'] };
   }
   if (/\b(price|pricing|cost|membership|trial|fee|discount)\b/.test(normalized)) {
     return { answer: "Current prices and trial terms aren’t published in the approved information, so I don’t want to guess. If you send a first-class request, BUMA can follow up with the current rates and the best option for the program you’re interested in.", sourceIds: ['pricing'], actions: ['leadForm', 'call', 'email'] };
