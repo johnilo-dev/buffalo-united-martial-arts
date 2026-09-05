@@ -35,5 +35,6 @@ footer{background:#050607;color:#fff;padding:40px 5vw;display:grid;grid-template
 .chat-form:focus-within{border-color:#20252a;box-shadow:0 0 0 3px rgba(255,255,255,.85),0 0 0 5px rgba(20,24,27,.22)}
 .chat-form button:disabled{cursor:wait;filter:grayscale(.5);opacity:.6;transform:none}
 .chat-form textarea:disabled{cursor:wait;background:#f1f2f2}
-.chat-close:focus-visible,.chat-reset:focus-visible,.chat-nav button:focus-visible,.chat-nav a:focus-visible,.chat-suggestions button:focus-visible,.chat-launcher:focus-visible{outline:3px solid #fff;outline-offset:2px}
+.chat-suggestions a{min-height:48px;display:flex;align-items:center;gap:12px;border:1px solid rgba(255,255,255,.55);border-radius:13px;background:#fff;color:#202226;padding:10px 15px;font-size:14px;font-weight:500;text-align:left;white-space:normal;box-shadow:0 7px 13px rgba(15,18,21,.2);transition:transform .18s,box-shadow .18s}.chat-suggestions a:hover{transform:translateY(-2px);box-shadow:0 10px 16px rgba(15,18,21,.28)}.chat-suggestions a span{display:grid;place-items:center;flex:0 0 20px;width:20px;height:20px;border-radius:50%;background:#ffe2ea;color:#dd557b;font-size:10px}
+.chat-close:focus-visible,.chat-reset:focus-visible,.chat-nav button:focus-visible,.chat-nav a:focus-visible,.chat-suggestions button:focus-visible,.chat-suggestions a:focus-visible,.chat-launcher:focus-visible{outline:3px solid #fff;outline-offset:2px}
 .day-tab:focus-visible,.button:focus-visible,.text-button:focus-visible,a:focus-visible{outline:3px solid var(--red);outline-offset:3px}

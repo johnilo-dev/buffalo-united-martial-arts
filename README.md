@@ -10,6 +10,7 @@ A responsive website and guarded information assistant for Buffalo United Martia
 - Grounded source links on every retrieved answer
 - Explicit handling of uncertain information, including unpublished prices and the two phone numbers found across the official page and Google listing
 - Live Buffalo-area weather responses through the National Weather Service, cached server-side
+- First-class request lead capture through a published Google Form linked to an internal response Sheet
 - AI budget protection with request limits before DeepSeek is called
 - Keyboard navigation, semantic landmarks, reduced-motion support and mobile layout
 
@@ -29,10 +30,11 @@ Request flow:
 
 1. Crawl approved official pages and owner-supplied documents.
 2. Retrieve the most relevant approved public passages on the Worker.
-3. Handle greetings, assistant identity, services, emergencies, medical questions, prices and bookings through deterministic receptionist routes.
+3. Handle greetings, assistant identity, services, emergencies, medical questions, prices, trials, bookings and enrollment interest through deterministic receptionist routes.
 4. Use a maximum of six recent in-memory messages to resolve follow-up questions; conversation history is not persisted.
-5. Generate a short receptionist answer using only retrieved context when the model is available.
-6. Return validated citations, useful call/email/schedule/directions actions, or a grounded deterministic fallback.
+5. Route lead-intent questions to the first-class request form instead of asking visitors to keep sharing contact details in chat.
+6. Generate a short receptionist answer using only retrieved context when the model is available.
+7. Return validated citations, useful form/call/email/schedule/directions actions, or a grounded deterministic fallback.
 
 The Worker uses layered limits so common questions do not drain the DeepSeek balance:
 
@@ -45,6 +47,8 @@ The Worker uses layered limits so common questions do not drain the DeepSeek bal
 The in-memory limiters are retained only as local-development fallbacks.
 
 Weather questions are answered by the Worker through the National Weather Service API and cached for 10 minutes. Weather responses do not use DeepSeek.
+
+Lead capture uses the published Google Form at `https://docs.google.com/forms/d/e/1FAIpQLScYcTIzDHbRcFVRJTI1JtdCgfYV2vMvzbOH8dSxOxXzUO1vUA/viewform?usp=publish-editor`. Responses are stored in the linked private Google Sheet owned by the signed-in Google account. Keep the Sheet private unless the owner explicitly approves broader access.
 
 Never expose an LLM API key in browser JavaScript.
 

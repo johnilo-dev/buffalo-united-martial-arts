@@ -36,6 +36,7 @@ const aliases = {
 const stopWords = new Set('a about an and are as at be by can do does for from how i in is it me my no not of on or our the their there this to use what when where which who with you your'.split(' '));
 const genericTerms = new Set(['class', 'classes', 'program', 'programs', 'training']);
 const ACTIONS = {
+  leadForm: { label: 'Request first class', href: 'https://docs.google.com/forms/d/e/1FAIpQLScYcTIzDHbRcFVRJTI1JtdCgfYV2vMvzbOH8dSxOxXzUO1vUA/viewform?usp=publish-editor' },
   call: { label: 'Call the academy', href: 'tel:+17166717197' },
   email: { label: 'Email BUMA', href: 'mailto:info@fightfamily.com' },
   schedule: { label: 'View class schedule', href: '#schedule' },
@@ -152,30 +153,30 @@ function receptionistRoute(message) {
   if (/\b(injury|injured|pain|medical|diagnose|concussion|medicine)\b/.test(normalized)) {
     return { answer: 'I can’t provide medical advice. For urgent symptoms, contact emergency services. Otherwise, speak with a qualified healthcare professional and contact the academy directly before training.', sourceIds: [], actions: ['call'] };
   }
-  if (/\b(book|booking|reserve|reservation|appointment)\b/.test(normalized)) {
-    return { answer: 'I can’t confirm a reservation or booking, but I can help you take the next step. Please call or email the academy about attending your first class.', sourceIds: [], actions: ['call', 'email'] };
+  if (/\b(what.*wear|what.*bring|equipment|gear|waiver|parking|age requirement|how old)\b/.test(normalized)) {
+    return { answer: "That first-visit detail isn’t included in the approved academy information yet, so I don’t want to guess. You can send a first-class request or call BUMA to confirm before you arrive.", sourceIds: [], actions: ['leadForm', 'call', 'email'] };
+  }
+  if (/\b(book|booking|reserve|reservation|appointment|enroll|enrollment|join|sign up|signup|first class|try a class|try class|interested)\b/.test(normalized)) {
+    return { answer: 'I can’t confirm a booking from chat, but the best next step is to send a first-class request. It asks for the basics so BUMA can follow up with the right program, timing and next steps.', sourceIds: [], actions: ['leadForm', 'call', 'schedule'] };
   }
   if (/\b(price|pricing|cost|membership|trial|fee|discount)\b/.test(normalized)) {
-    return { answer: "Current prices and trial terms are not published in the approved information, so I don't want to guess. Contact the academy directly for current rates and eligibility.", sourceIds: ['pricing'], actions: ['call', 'email'] };
+    return { answer: "Current prices and trial terms aren’t published in the approved information, so I don’t want to guess. If you send a first-class request, BUMA can follow up with the current rates and the best option for the program you’re interested in.", sourceIds: ['pricing'], actions: ['leadForm', 'call', 'email'] };
   }
   if (/\b(deepseek|chatgpt|language model)\b/.test(normalized) || /\b(who|what) are you\b/.test(normalized) || /\bare you (an |a )?(ai|bot|human)\b/.test(normalized)) {
-    return { answer: "I’m BUMA’s virtual receptionist. I can answer from approved public academy info, and I use DeepSeek only when a question needs a little extra help. I’m not human and I can’t complete bookings, but I can point you to the right next step.", sourceIds: [], actions: [] };
+    return { answer: "I’m BUMA’s virtual receptionist. I can answer from approved public academy info, and I use DeepSeek only when a question needs a little extra help. I’m not human and I can’t complete bookings, but I can point you to the first-class request form or the right contact step.", sourceIds: [], actions: ['leadForm'] };
   }
   if (/\b(what time is it|current time|time now|today's date|todays date|what day is it|current date)\b/.test(normalized)) {
     return { answer: `It’s ${buffaloTime()} in Buffalo. If you’re checking class timing, I can show the published schedule too.`, sourceIds: [], actions: ['schedule'] };
   }
   if (isWeatherQuestion(normalized)) return { weather: true };
   if (/\b(how are you|how's it going|hows it going|how are things)\b/.test(normalized)) {
-    return { answer: "I’m doing well, thanks for asking. I’m here to help you find the right BUMA class, check published times, or get directions when you’re ready.", sourceIds: [], actions: ['schedule', 'directions'] };
+    return { answer: "I’m doing well, thanks for asking. I’m here to help you find the right BUMA class, check published times, request a first class or get directions when you’re ready.", sourceIds: [], actions: ['schedule', 'leadForm', 'directions'] };
   }
   if (/\b(can you help|help me|what can you do)\b/.test(normalized)) {
-    return { answer: "Absolutely. I can help with BUMA’s programs, published class times, instructors, location, contact info and first-visit questions. If something isn’t published yet, I’ll point you to the academy instead of guessing.", sourceIds: [], actions: ['schedule', 'call'] };
+    return { answer: "Absolutely. I can help with BUMA’s programs, published class times, instructors, location, contact info and first-visit questions. If you’re interested, I can also send you to the first-class request form.", sourceIds: [], actions: ['leadForm', 'schedule', 'call'] };
   }
   if (/\b(where are you|where is buma|located|location|address|directions|get there)\b/.test(normalized)) {
     return { answer: 'Buffalo United Martial Arts is at 359 Ganson Street, Buffalo, New York 14203, in the Buffalo RiverWorks area downtown.', sourceIds: ['location'], actions: ['directions', 'call'] };
-  }
-  if (/\b(what.*wear|what.*bring|equipment|gear|waiver|parking|age requirement|how old)\b/.test(normalized)) {
-    return { answer: "That first-visit detail isn’t included in the approved academy information yet, so I don’t want to guess. Please call or email BUMA to confirm before you arrive.", sourceIds: [], actions: ['call', 'email'] };
   }
   if (/^(show|view|see)? ?(the )?(class )?schedule$/.test(normalized)) {
     return { answer: 'You can view BUMA’s published class schedule below. Class times can change, so please confirm with the academy before your first visit.', sourceIds: ['morning', 'kids', 'weekend', 'nogi', 'other-times'], actions: ['schedule', 'call'] };
@@ -184,10 +185,10 @@ function receptionistRoute(message) {
     || /\bwhat (class|classes|training)\b/.test(normalized)
     || /\bwhat do you (offer|teach)\b/.test(normalized);
   if (asksAboutOfferings) {
-    return { answer: 'Of course. Buffalo United offers Brazilian Jiu-Jitsu, Muay Thai, MMA, kids martial arts, Judo, Sambo, boxing, submission wrestling and Kru Fit cardio. Want me to show the published class times next?', sourceIds: ['programs'], actions: ['schedule', 'call'] };
+    return { answer: 'Of course. Buffalo United offers Brazilian Jiu-Jitsu, Muay Thai, MMA, kids martial arts, Judo, Sambo, boxing, submission wrestling and Kru Fit cardio. If one sounds interesting, you can request a first class or check the published schedule.', sourceIds: ['programs'], actions: ['leadForm', 'schedule', 'call'] };
   }
   if (/^(hi|hello|hey|good morning|good afternoon|good evening)( there)?$/.test(normalized)) {
-    return { answer: 'Hi, welcome to Buffalo United. I can help with programs, published class times, instructors, location and getting ready for a first visit. What would you like to check first?', sourceIds: [], actions: ['schedule'] };
+    return { answer: 'Hi, welcome to Buffalo United. I can help with programs, published class times, instructors, location and getting ready for a first visit. What would you like to check first?', sourceIds: [], actions: ['leadForm', 'schedule'] };
   }
   if (/^(thanks|thank you|thank you very much|bye|goodbye)$/.test(normalized)) {
     return { answer: 'You’re very welcome. If anything else comes up, I can help with classes, schedules, instructors or directions to BUMA.', sourceIds: [], actions: ['schedule', 'directions'] };
@@ -313,9 +314,10 @@ function recommendedActions(message, documents) {
   const categories = new Set(documents.map((document) => document.category));
   const normalized = normalize(message);
   if (categories.has('contact') && /\b(where|location|address|directions|parking)\b/.test(normalized)) return actionView(['directions', 'call']);
-  if (categories.has('schedule')) return actionView(['schedule', 'call']);
-  if (categories.has('programs') || categories.has('about')) return actionView(['schedule', 'call']);
-  if (categories.has('contact') || categories.has('membership')) return actionView(['call', 'email']);
+  if (/\b(book|booking|reserve|reservation|appointment|enroll|enrollment|join|sign up|signup|first class|try a class|try class|interested|price|pricing|cost|membership|trial|fee|discount)\b/.test(normalized)) return actionView(['leadForm', 'call', 'email']);
+  if (categories.has('schedule')) return actionView(['schedule', 'leadForm', 'call']);
+  if (categories.has('programs') || categories.has('about')) return actionView(['leadForm', 'schedule', 'call']);
+  if (categories.has('contact') || categories.has('membership')) return actionView(['leadForm', 'call', 'email']);
   return [];
 }
 

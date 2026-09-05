@@ -107,6 +107,7 @@ const scheduleTab = document.querySelector('.chat-schedule-tab');
 const visitTab = document.querySelector('.chat-visit');
 const statusLine = document.querySelector('#chat-status');
 const endpoint = document.querySelector('meta[name="buma-chat-api"]')?.content.trim() || '';
+const leadFormUrl = 'https://docs.google.com/forms/d/e/1FAIpQLScYcTIzDHbRcFVRJTI1JtdCgfYV2vMvzbOH8dSxOxXzUO1vUA/viewform?usp=publish-editor';
 let busy = false;
 const conversationHistory = [];
 
@@ -236,13 +237,19 @@ function composeLocal(query, documents) {
     return 'Buffalo United Martial Arts is at 359 Ganson Street, Buffalo, New York 14203, in the Buffalo RiverWorks area downtown.';
   }
   if (/\b(what.*wear|what.*bring|equipment|gear|waiver|parking|age requirement|how old)\b/.test(normalized)) {
-    return "That first-visit detail isn’t included in the approved academy information yet, so I don’t want to guess. Please call or email BUMA to confirm before you arrive.";
+    return "That first-visit detail isn’t included in the approved academy information yet, so I don’t want to guess. You can send a first-class request or call BUMA to confirm before you arrive.";
   }
   if (/^(show|view|see)? ?(the )?(class )?schedule$/.test(normalized)) {
     return 'You can view BUMA’s published class schedule below. Class times can change, so please confirm with the academy before your first visit.';
   }
   if (/\b(services|offerings|programs)\b/.test(normalized) || /\bwhat (class|classes|training)\b/.test(normalized) || /\bwhat do you (offer|teach)\b/.test(normalized)) {
     return 'Of course. Buffalo United offers Brazilian Jiu-Jitsu, Muay Thai, MMA, kids martial arts, Judo, Sambo, boxing, submission wrestling and Kru Fit cardio. Want me to show the published class times next?';
+  }
+  if (/\b(book|booking|reserve|reservation|appointment|enroll|enrollment|join|sign up|signup|first class|try a class|try class|interested)\b/.test(normalized)) {
+    return 'I can’t confirm a booking from chat, but the best next step is to send a first-class request. It asks for the basics so BUMA can follow up with the right program, timing and next steps.';
+  }
+  if (/\b(price|pricing|cost|membership|trial|fee|discount)\b/.test(normalized)) {
+    return "Current prices and trial terms aren’t published in the approved information, so I don’t want to guess. If you send a first-class request, BUMA can follow up with the current rates and the best option for the program you’re interested in.";
   }
   if (/^(hi|hello|hey|good morning|good afternoon|good evening)( there)?$/.test(normalized)) {
     return 'Hi, welcome to Buffalo United. I can help with programs, published class times, instructors, location and getting ready for a first visit. What would you like to check first?';
@@ -254,10 +261,10 @@ function composeLocal(query, documents) {
     return 'BUMA’s published information says its programs serve beginners through experienced martial artists. Fundamentals and all-level sessions are listed, but contact the academy before your first visit so staff can recommend the right class.';
   }
   if (normalized.includes('price') || normalized.includes('cost') || normalized.includes('membership') || normalized.includes('trial')) {
-    return "Current prices and trial terms are not published in the approved information, so I don't want to guess. Contact the academy directly for current rates and eligibility.";
+    return "Current prices and trial terms aren’t published in the approved information, so I don’t want to guess. If you send a first-class request, BUMA can follow up with the current rates and the best option for the program you’re interested in.";
   }
   if (normalized.includes('book') || normalized.includes('reserve') || normalized.includes('appointment')) {
-    return 'I can’t confirm a reservation or booking. The currently verified next step is to contact the academy directly about attending your first class.';
+    return 'I can’t confirm a reservation or booking, but I can help you take the next step. Please send a first-class request so BUMA can follow up with the right program, timing and next steps.';
   }
   if (normalized.includes('phone') || normalized.includes('number') || normalized.includes('contact')) {
     return 'The current official site displays (716) 671-7197 and info@fightfamily.com. Its click-to-call link and the supplied Google listing use (716) 563-0720, so the primary number still needs owner confirmation.';
@@ -266,6 +273,33 @@ function composeLocal(query, documents) {
     return `Published schedule highlights: ${documents.map((document) => document.text).join(' ')} Schedules can change, so confirm before your first visit.`;
   }
   return `${documents[0].text}${documents[0].category === 'schedule' ? ' Schedules can change, so confirm before your first visit.' : ''}`;
+}
+
+function localActions(query, documents) {
+  const normalized = normalize(query);
+  const categories = new Set(documents.map((document) => document.category));
+  if (/\b(book|booking|reserve|reservation|appointment|enroll|enrollment|join|sign up|signup|first class|try a class|try class|interested|price|pricing|cost|membership|trial|fee|discount)\b/.test(normalized)) {
+    return [
+      { label: 'Request first class', href: leadFormUrl },
+      { label: 'Call the academy', href: 'tel:+17166717197' },
+      { label: 'Email BUMA', href: 'mailto:info@fightfamily.com' },
+    ];
+  }
+  if (categories.has('schedule')) {
+    return [
+      { label: 'View class schedule', href: '#schedule' },
+      { label: 'Request first class', href: leadFormUrl },
+      { label: 'Call the academy', href: 'tel:+17166717197' },
+    ];
+  }
+  if (categories.has('programs') || categories.has('about')) {
+    return [
+      { label: 'Request first class', href: leadFormUrl },
+      { label: 'View class schedule', href: '#schedule' },
+      { label: 'Call the academy', href: 'tel:+17166717197' },
+    ];
+  }
+  return [];
 }
 
 function safeActionHref(href) {
@@ -387,7 +421,7 @@ async function ask(question) {
     const fallback = composeLocal(clean, documents);
     await minimumReplyDelay;
     typing.remove();
-    appendMessage(fallback, 'assistant', documents.slice(0, 1), 'Live assistant unavailable; using the on-page verified information.');
+    appendMessage(fallback, 'assistant', documents.slice(0, 1), 'Live assistant unavailable; using the on-page verified information.', localActions(clean, documents));
     conversationHistory.push({ role: 'assistant', content: fallback.slice(0, 500) });
     setBusy(false, 'Ready · local information mode');
   }

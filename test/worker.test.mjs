@@ -130,6 +130,36 @@ test('handles first-visit unknowns without inventing facts or citing unrelated p
   assert.ok(payload.actions.some((action) => action.label === 'Call the academy'));
 });
 
+test('routes pricing and trial questions to the first-class request form without DeepSeek', async () => {
+  let aiRateCalls = 0;
+  const response = await handleRequest(request('How much does membership cost and do you have a trial?'), {
+    DEEPSEEK_API_KEY: 'test-secret-value',
+    BUMA_AI_RATE_LIMITER: {
+      limit: async () => {
+        aiRateCalls += 1;
+        return { success: true };
+      },
+    },
+  });
+  const payload = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(payload.mode, 'receptionist');
+  assert.match(payload.answer, /don’t want to guess|first-class request/i);
+  assert.deepEqual(payload.sources.map((source) => source.id), ['pricing']);
+  assert.ok(payload.actions.some((action) => action.label === 'Request first class' && action.href.includes('docs.google.com/forms')));
+  assert.equal(aiRateCalls, 0);
+});
+
+test('routes booking and enrollment intent to the first-class request form', async () => {
+  const response = await handleRequest(request('I want to book my first class'), {});
+  const payload = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(payload.mode, 'receptionist');
+  assert.match(payload.answer, /can’t confirm a booking|first-class request/i);
+  assert.deepEqual(payload.sources, []);
+  assert.ok(payload.actions.some((action) => action.label === 'Request first class'));
+});
+
 test('provides a grounded location answer with a directions action', async () => {
   const response = await handleRequest(request('Where are you located?'), {});
   const payload = await response.json();
