@@ -6,9 +6,10 @@ A responsive website and guarded information assistant for Buffalo United Martia
 
 - Responsive editorial landing page using imagery currently published by the academy
 - Programs, published schedule, instructor team, review proof and location/contact sections
-- Bottom-right “Ask BUMA” virtual receptionist with local retrieval over a curated knowledge base
+- Bottom-right “Ask BUMA” virtual receptionist with deterministic answers and local retrieval over a curated knowledge base
 - Grounded source links on every retrieved answer
 - Explicit handling of uncertain information, including unpublished prices and the two phone numbers found across the official page and Google listing
+- AI budget protection with request limits before DeepSeek is called
 - Keyboard navigation, semantic landmarks, reduced-motion support and mobile layout
 
 ## Local development
@@ -32,7 +33,15 @@ Request flow:
 5. Generate a short receptionist answer using only retrieved context when the model is available.
 6. Return validated citations, useful call/email/schedule/directions actions, or a grounded deterministic fallback.
 
-The Worker also uses a dedicated Cloudflare rate-limit binding for the chat endpoint. Its in-memory limiter is retained only as a local-development fallback.
+The Worker uses layered limits so common questions do not drain the DeepSeek balance:
+
+1. General chat requests are limited to 20 requests per minute.
+2. DeepSeek-eligible requests are separately limited to 5 AI attempts per minute.
+3. A Durable Object tracks daily AI usage across the Worker: 25 AI calls per browser, 40 per IP address and 250 total AI calls per day by default.
+4. The browser sends a random local visitor ID for budget tracking. It is not a login, lead record or chat transcript.
+5. If an AI limit is reached, the assistant returns the deterministic retrieved answer and explains that AI-assisted answers are being limited.
+
+The in-memory limiters are retained only as local-development fallbacks.
 
 Never expose an LLM API key in browser JavaScript.
 
