@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { handleRequest, retrieve } from '../worker/src/index.js';
+import { BumaUsageBudget, handleRequest, retrieve } from '../worker/src/index.js';
 
 const origin = 'https://johnilo-dev.github.io';
 
@@ -161,6 +161,77 @@ test('uses the Cloudflare rate-limit binding when configured', async () => {
   });
   assert.equal(calls, 1);
   assert.equal(response.status, 429);
+});
+
+test('does not spend an AI-rate check on deterministic receptionist answers', async () => {
+  let aiRateCalls = 0;
+  const response = await handleRequest(request('Hello, what are your services?'), {
+    DEEPSEEK_API_KEY: 'test-secret-value',
+    BUMA_AI_RATE_LIMITER: {
+      limit: async () => {
+        aiRateCalls += 1;
+        return { success: true };
+      },
+    },
+  });
+  const payload = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(payload.mode, 'receptionist');
+  assert.equal(aiRateCalls, 0);
+});
+
+test('falls back to retrieval when the AI-rate limit is reached', async () => {
+  const originalFetch = globalThis.fetch;
+  let upstreamCalls = 0;
+  globalThis.fetch = async () => {
+    upstreamCalls += 1;
+    return new Response(JSON.stringify({
+      choices: [{ message: { content: JSON.stringify({ answer: 'Should not spend this call', sourceIds: ['weekend'] }) } }],
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  };
+  try {
+    const response = await handleRequest(request('When is Sunday boxing?'), {
+      DEEPSEEK_API_KEY: 'test-secret-value',
+      BUMA_AI_RATE_LIMITER: { limit: async () => ({ success: false }) },
+    });
+    const payload = await response.json();
+    assert.equal(response.status, 200);
+    assert.equal(payload.mode, 'retrieval');
+    assert.equal(payload.limited, true);
+    assert.equal(upstreamCalls, 0);
+    assert.match(payload.answer, /protect the academy's chat budget/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('records daily AI usage in the Durable Object budget', async () => {
+  const store = new Map();
+  const budget = new BumaUsageBudget({
+    storage: {
+      get: async (key) => store.get(key),
+      put: async (key, value) => store.set(key, value),
+    },
+  });
+  const first = await budget.checkAndRecord({
+    visitorKey: 'visitor-123456',
+    ip: '203.0.113.5',
+    now: Date.parse('2026-09-05T12:00:00Z'),
+    browserLimit: 2,
+    ipLimit: 3,
+    globalLimit: 4,
+  });
+  const second = await budget.checkAndRecord({
+    visitorKey: 'visitor-123456',
+    ip: '203.0.113.5',
+    now: Date.parse('2026-09-05T12:01:00Z'),
+    browserLimit: 1,
+    ipLimit: 3,
+    globalLimit: 4,
+  });
+  assert.equal(first.success, true);
+  assert.equal(second.success, false);
+  assert.equal(second.usage.browser, 2);
 });
 
 test('uses limited recent conversation to resolve a follow-up', async () => {

@@ -5,6 +5,18 @@ workers_dev = true
 
 [vars]
 ALLOWED_ORIGINS = "https://johnilo-dev.github.io,http://localhost:4173,http://127.0.0.1:4173"
+AI_RATE_LIMIT = "5"
+DAILY_BROWSER_AI_LIMIT = "25"
+DAILY_IP_AI_LIMIT = "40"
+DAILY_GLOBAL_AI_LIMIT = "250"
+
+[[durable_objects.bindings]]
+name = "BUMA_USAGE_BUDGET"
+class_name = "BumaUsageBudget"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["BumaUsageBudget"]
 
 [[ratelimits]]
 name = "BUMA_RATE_LIMITER"
@@ -12,4 +24,12 @@ namespace_id = "764920381"
 
   [ratelimits.simple]
   limit = 20
+  period = 60
+
+[[ratelimits]]
+name = "BUMA_AI_RATE_LIMITER"
+namespace_id = "764920382"
+
+  [ratelimits.simple]
+  limit = 5
   period = 60

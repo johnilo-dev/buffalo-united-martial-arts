@@ -110,6 +110,19 @@ const endpoint = document.querySelector('meta[name="buma-chat-api"]')?.content.t
 let busy = false;
 const conversationHistory = [];
 
+function chatVisitorId() {
+  const storageKey = 'buma-chat-visitor-id';
+  try {
+    const current = localStorage.getItem(storageKey);
+    if (current && /^[a-z0-9-]{12,80}$/i.test(current)) return current;
+    const generated = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    localStorage.setItem(storageKey, generated);
+    return generated;
+  } catch {
+    return 'anonymous';
+  }
+}
+
 function setChat(open) {
   widget.classList.toggle('open', open);
   widget.setAttribute('aria-hidden', String(!open));
@@ -295,7 +308,7 @@ async function requestAssistant(message, history) {
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, history }),
+      body: JSON.stringify({ message, history, visitorId: chatVisitorId() }),
       signal: controller.signal,
     });
     if (!response.ok) throw new Error(`Assistant returned ${response.status}`);

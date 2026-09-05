@@ -5,7 +5,14 @@ const MAX_HISTORY_MESSAGES = 6;
 const MAX_HISTORY_LENGTH = 2400;
 const RATE_WINDOW_MS = 60_000;
 const RATE_LIMIT = 20;
+const AI_RATE_WINDOW_MS = 60_000;
+const AI_RATE_LIMIT = 5;
+const DAILY_BROWSER_AI_LIMIT = 25;
+const DAILY_IP_AI_LIMIT = 40;
+const DAILY_GLOBAL_AI_LIMIT = 250;
 const requestBuckets = new Map();
+const aiBuckets = new Map();
+const localAiDailyUsage = new Map();
 const aliases = {
   'brazilian jiu jitsu': 'bjj',
   'jiu-jitsu': 'bjj',
@@ -157,6 +164,59 @@ function actionView(keys) {
   return [...new Set(keys)].map((key) => ACTIONS[key]).filter(Boolean);
 }
 
+function numberSetting(value, fallback, min = 1) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed >= min ? parsed : fallback;
+}
+
+function clientKey(value) {
+  return typeof value === 'string' && /^[a-z0-9-]{12,80}$/i.test(value) ? value.toLowerCase() : 'anonymous';
+}
+
+function ipKey(request) {
+  return request.headers.get('CF-Connecting-IP') || 'local';
+}
+
+function dayKey(now = Date.now()) {
+  return new Date(now).toISOString().slice(0, 10);
+}
+
+async function storageGet(storage, key) {
+  if (storage?.kv?.get) return storage.kv.get(key);
+  return storage?.get ? storage.get(key) : undefined;
+}
+
+async function storagePut(storage, key, value) {
+  if (storage?.kv?.put) return storage.kv.put(key, value);
+  return storage?.put ? storage.put(key, value) : undefined;
+}
+
+async function incrementDailyUsage(storage, key, today) {
+  const current = await storageGet(storage, key);
+  const next = current?.day === today ? { day: today, count: current.count + 1 } : { day: today, count: 1 };
+  await storagePut(storage, key, next);
+  return next.count;
+}
+
+export class BumaUsageBudget {
+  constructor(state) {
+    this.state = state;
+  }
+
+  async checkAndRecord({ visitorKey, ip, now, browserLimit, ipLimit, globalLimit }) {
+    const today = dayKey(now);
+    const storage = this.state.storage;
+    const globalCount = await incrementDailyUsage(storage, `global:${today}`, today);
+    const browserCount = await incrementDailyUsage(storage, `browser:${today}:${visitorKey}`, today);
+    const ipCount = await incrementDailyUsage(storage, `ip:${today}:${ip}`, today);
+    return {
+      success: browserCount <= browserLimit && ipCount <= ipLimit && globalCount <= globalLimit,
+      usage: { browser: browserCount, ip: ipCount, global: globalCount },
+      limits: { browser: browserLimit, ip: ipLimit, global: globalLimit },
+    };
+  }
+}
+
 function recommendedActions(message, documents) {
   const categories = new Set(documents.map((document) => document.category));
   const normalized = normalize(message);
@@ -194,7 +254,7 @@ function allowedOrigin(origin, env) {
 }
 
 async function withinRateLimit(request, env) {
-  const key = request.headers.get('CF-Connecting-IP') || 'local';
+  const key = ipKey(request);
   if (env.BUMA_RATE_LIMITER?.limit) {
     const result = await env.BUMA_RATE_LIMITER.limit({ key });
     return result.success;
@@ -212,6 +272,66 @@ async function withinRateLimit(request, env) {
     }
   }
   return current.count <= RATE_LIMIT;
+}
+
+function withinLocalWindow(bucketMap, key, limit, windowMs) {
+  const now = Date.now();
+  const current = bucketMap.get(key);
+  if (!current || now - current.startedAt >= windowMs) {
+    bucketMap.set(key, { count: 1, startedAt: now });
+    return true;
+  }
+  current.count += 1;
+  if (bucketMap.size > 500) {
+    for (const [bucketKey, bucket] of bucketMap) {
+      if (now - bucket.startedAt >= windowMs) bucketMap.delete(bucketKey);
+    }
+  }
+  return current.count <= limit;
+}
+
+async function withinAiRateLimit(request, env, visitorKey) {
+  const key = `${ipKey(request)}:${visitorKey}`;
+  if (env.BUMA_AI_RATE_LIMITER?.limit) {
+    const result = await env.BUMA_AI_RATE_LIMITER.limit({ key });
+    return result.success;
+  }
+  const limit = numberSetting(env.AI_RATE_LIMIT, AI_RATE_LIMIT);
+  return withinLocalWindow(aiBuckets, key, limit, AI_RATE_WINDOW_MS);
+}
+
+async function withinAiDailyBudget(request, env, visitorKey) {
+  const limits = {
+    browserLimit: numberSetting(env.DAILY_BROWSER_AI_LIMIT, DAILY_BROWSER_AI_LIMIT),
+    ipLimit: numberSetting(env.DAILY_IP_AI_LIMIT, DAILY_IP_AI_LIMIT),
+    globalLimit: numberSetting(env.DAILY_GLOBAL_AI_LIMIT, DAILY_GLOBAL_AI_LIMIT),
+  };
+  if (env.BUMA_USAGE_BUDGET?.idFromName && env.BUMA_USAGE_BUDGET?.get) {
+    const object = env.BUMA_USAGE_BUDGET.get(env.BUMA_USAGE_BUDGET.idFromName('daily-ai-budget'));
+    const result = await object.checkAndRecord({
+      visitorKey,
+      ip: ipKey(request),
+      now: Date.now(),
+      ...limits,
+    });
+    return result.success;
+  }
+  const today = dayKey();
+  const browserKey = `browser:${today}:${visitorKey}`;
+  const ipDailyKey = `ip:${today}:${ipKey(request)}`;
+  const globalKey = `global:${today}`;
+  const browserCount = (localAiDailyUsage.get(browserKey) || 0) + 1;
+  const ipCount = (localAiDailyUsage.get(ipDailyKey) || 0) + 1;
+  const globalCount = (localAiDailyUsage.get(globalKey) || 0) + 1;
+  localAiDailyUsage.set(browserKey, browserCount);
+  localAiDailyUsage.set(ipDailyKey, ipCount);
+  localAiDailyUsage.set(globalKey, globalCount);
+  if (localAiDailyUsage.size > 2000) {
+    for (const key of localAiDailyUsage.keys()) {
+      if (!key.includes(today)) localAiDailyUsage.delete(key);
+    }
+  }
+  return browserCount <= limits.browserLimit && ipCount <= limits.ipLimit && globalCount <= limits.globalLimit;
 }
 
 async function generateAnswer(message, documents, history, apiKey) {
@@ -292,6 +412,7 @@ export async function handleRequest(request, env = {}) {
   if (message.length > MAX_MESSAGE_LENGTH) return response({ error: `Message must be ${MAX_MESSAGE_LENGTH} characters or fewer` }, 413, origin, true);
 
   const history = cleanHistory(payload?.history);
+  const visitorKey = clientKey(payload?.visitorId);
   const direct = receptionistRoute(message);
   if (direct) {
     const documents = selectDocuments(direct.sourceIds);
@@ -311,6 +432,16 @@ export async function handleRequest(request, env = {}) {
       sources: sourceView(documents.slice(0, 1)),
       actions: recommendedActions(message, documents),
       mode: documents.length ? 'retrieval' : 'receptionist',
+    }, 200, origin, true);
+  }
+
+  if (!await withinAiRateLimit(request, env, visitorKey) || !await withinAiDailyBudget(request, env, visitorKey)) {
+    return response({
+      answer: `${deterministicAnswer(message, documents)} AI-assisted answers are being limited right now to protect the academy's chat budget.`,
+      sources: sourceView(documents.slice(0, 1)),
+      actions: recommendedActions(message, documents),
+      mode: 'retrieval',
+      limited: true,
     }, 200, origin, true);
   }
 
