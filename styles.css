@@ -452,6 +452,8 @@ main > section[id] { scroll-margin-top: 88px; }
 }
 .why-image {
   position: relative;
+  grid-column: 1;
+  grid-row: 1 / span 2;
   transform: rotate(-1deg);
 }
 .why-image img {
@@ -478,6 +480,16 @@ main > section[id] { scroll-margin-top: 88px; }
   max-width: 670px;
   font-size: 18px;
   line-height: 1.7;
+}
+.why-copy {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: end;
+}
+.why-values {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: start;
 }
 .value-list {
   display: grid;
@@ -663,8 +675,9 @@ main > section[id] { scroll-margin-top: 88px; }
 }
 .testimonial-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(0, .9fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
+  align-items: stretch;
   margin-top: 42px;
 }
 .testimonial-card {
@@ -679,7 +692,6 @@ main > section[id] { scroll-margin-top: 88px; }
   box-shadow: 0 8px 0 rgba(23,24,25,.08);
 }
 .testimonial-card:first-child {
-  grid-row: span 2;
   background: var(--color-board);
   color: var(--color-paper-3);
 }
@@ -721,6 +733,8 @@ main > section[id] { scroll-margin-top: 88px; }
 }
 .location-map {
   position: relative;
+  grid-column: 1;
+  grid-row: 1;
   min-height: 520px;
   overflow: hidden;
   background: var(--color-board);
@@ -748,6 +762,10 @@ main > section[id] { scroll-margin-top: 88px; }
   font-weight: 900;
   letter-spacing: .08em;
   text-transform: uppercase;
+}
+.location-copy {
+  grid-column: 2;
+  grid-row: 1;
 }
 .location-copy address {
   margin-top: 20px;
@@ -859,11 +877,72 @@ footer > small {
   display: none;
 }
 .chat-pulse {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+  transform-origin: center;
+}
+.chat-pulse::before,
+.chat-hand {
+  position: absolute;
+  inset: 0;
+  transform-origin: 55% 80%;
+}
+.chat-pulse::before {
+  content: "";
   width: 8px;
   height: 8px;
+  margin: auto;
   border-radius: 50%;
   background: var(--color-paper-3);
   box-shadow: 0 0 0 6px rgba(255,255,255,.16);
+  animation: chat-dot-morph 5.6s var(--ease-out) infinite;
+}
+.chat-hand {
+  width: 18px;
+  height: 18px;
+  fill: var(--color-paper-3);
+  opacity: 0;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,.16));
+  animation: chat-hand-wave 5.6s var(--ease-out) infinite;
+}
+@keyframes chat-dot-morph {
+  0%, 68%, 100% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(255,255,255,.16);
+  }
+  74% {
+    opacity: .35;
+    transform: scale(1.45, .45);
+    box-shadow: 0 0 0 9px rgba(255,255,255,.06);
+  }
+  78%, 90% {
+    opacity: 0;
+    transform: scale(.2);
+    box-shadow: 0 0 0 0 rgba(255,255,255,0);
+  }
+  95% {
+    opacity: .5;
+    transform: scale(1.25, .6);
+  }
+}
+@keyframes chat-hand-wave {
+  0%, 73%, 94%, 100% {
+    opacity: 0;
+    transform: scale(.25) rotate(0deg);
+  }
+  77% {
+    opacity: 1;
+    transform: scale(1) rotate(-10deg);
+  }
+  81% { transform: scale(1.05) rotate(16deg); }
+  85% { transform: scale(1.05) rotate(-12deg); }
+  89% {
+    opacity: 1;
+    transform: scale(1) rotate(10deg);
+  }
 }
 
 .chat-widget {
@@ -1293,10 +1372,33 @@ a:focus-visible {
   .program-copy-card { min-height: 390px; }
   .why,
   .location { grid-template-columns: 1fr; }
+  .why-copy {
+    grid-column: 1;
+    grid-row: 1;
+    align-self: auto;
+  }
+  .why-image {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  .why-values {
+    grid-column: 1;
+    grid-row: 3;
+  }
+  .location-copy {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .location-map {
+    grid-column: 1;
+    grid-row: 2;
+  }
   .coach-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .coach-card { grid-column: span 1; }
   .coach-card:nth-child(2),
   .coach-card:nth-child(5) { transform: none; }
+  .testimonial-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .testimonial-card:first-child { grid-column: 1 / -1; }
   .chat-launcher {
     height: 54px;
     padding-inline: 16px;
@@ -1383,6 +1485,7 @@ a:focus-visible {
   .coach-grid { grid-template-columns: 1fr; }
   .coach-card { grid-template-rows: 250px auto; }
   .testimonial-grid { grid-template-columns: 1fr; }
+  .testimonial-card:first-child { grid-column: auto; }
   .testimonial-card { padding: 26px 22px; }
   .location-map { min-height: 360px; }
   .contact-row,
@@ -1418,6 +1521,8 @@ a:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   .ticker-track { animation: none; }
+  .chat-pulse::before,
+  .chat-hand { animation: none; }
   .reveal {
     opacity: 1;
     transform: none;
