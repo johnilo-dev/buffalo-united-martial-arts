@@ -123,6 +123,26 @@ function chatVisitorId() {
   }
 }
 
+function buffaloTime() {
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short',
+  }).format(new Date());
+}
+
+function wait(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function typingDelayFor(text) {
+  return Math.min(2200, Math.max(950, 700 + text.length * 11));
+}
+
 function setChat(open) {
   widget.classList.toggle('open', open);
   widget.setAttribute('aria-hidden', String(!open));
@@ -199,7 +219,19 @@ function composeLocal(query, documents) {
     return 'I can’t provide medical advice. For urgent symptoms, contact emergency services. Otherwise, speak with a qualified healthcare professional and contact the academy directly before training.';
   }
   if (/\b(deepseek|chatgpt|language model)\b/.test(normalized) || /\b(who|what) are you\b/.test(normalized) || /\bare you (an |a )?(ai|bot|human)\b/.test(normalized)) {
-    return "I’m BUMA’s automated virtual receptionist. I use DeepSeek to help answer questions from approved public academy information, with built-in responses available if the AI service is unavailable. I’m not a human and I can’t complete bookings.";
+    return "I’m BUMA’s virtual receptionist. I can answer from approved public academy info, and I use DeepSeek only when a question needs a little extra help. I’m not human and I can’t complete bookings, but I can point you to the right next step.";
+  }
+  if (/\b(what time is it|current time|time now|today's date|todays date|what day is it|current date)\b/.test(normalized)) {
+    return `In Buffalo, it’s ${buffaloTime()}. Class times can still change, so please confirm with the academy before your first visit.`;
+  }
+  if (/\b(weather|temperature|raining|snowing|forecast)\b/.test(normalized)) {
+    return "I can’t check live weather from here, but I can help with BUMA’s published class times, location and contact info. If weather might affect your trip, it’s best to call before heading over.";
+  }
+  if (/\b(how are you|how's it going|hows it going|how are things)\b/.test(normalized)) {
+    return "I’m doing well, thanks for asking. I’m here to help you find the right BUMA class, check published times, or get directions when you’re ready.";
+  }
+  if (/\b(can you help|help me|what can you do)\b/.test(normalized)) {
+    return "Absolutely. I can help with BUMA’s programs, published class times, instructors, location, contact info and first-visit questions. If something isn’t published yet, I’ll point you to the academy instead of guessing.";
   }
   if (/\b(where are you|where is buma|located|location|address|directions|get there)\b/.test(normalized)) {
     return 'Buffalo United Martial Arts is at 359 Ganson Street, Buffalo, New York 14203, in the Buffalo RiverWorks area downtown.';
@@ -211,13 +243,13 @@ function composeLocal(query, documents) {
     return 'You can view BUMA’s published class schedule below. Class times can change, so please confirm with the academy before your first visit.';
   }
   if (/\b(services|offerings|programs)\b/.test(normalized) || /\bwhat (class|classes|training)\b/.test(normalized) || /\bwhat do you (offer|teach)\b/.test(normalized)) {
-    return 'Hi! Buffalo United offers Brazilian Jiu-Jitsu, Muay Thai, MMA, kids martial arts, Judo, Sambo, boxing, submission wrestling and Kru Fit cardio. Would you like class times or help choosing a program?';
+    return 'Of course. Buffalo United offers Brazilian Jiu-Jitsu, Muay Thai, MMA, kids martial arts, Judo, Sambo, boxing, submission wrestling and Kru Fit cardio. Want me to show the published class times next?';
   }
   if (/^(hi|hello|hey|good morning|good afternoon|good evening)( there)?$/.test(normalized)) {
-    return 'Hi! I’m BUMA’s virtual receptionist. I can help with programs, published class times, instructors, location and preparing for your first visit. What would you like to know?';
+    return 'Hi, welcome to Buffalo United. I can help with programs, published class times, instructors, location and getting ready for a first visit. What would you like to check first?';
   }
   if (!documents.length) {
-    return "I don't have verified information about that yet. I can help with BUMA’s programs, published class times, instructors, location and contact details, or connect you with the academy for anything else.";
+    return "I don’t have verified BUMA information about that yet. I can still help with programs, published class times, instructors, location and contact details, or point you to the academy for anything else.";
   }
   if (normalized.includes('beginner') || normalized.includes('never trained') || normalized.includes('new')) {
     return 'BUMA’s published information says its programs serve beginners through experienced martial artists. Fundamentals and all-level sessions are listed, but contact the academy before your first visit so staff can recommend the right class.';
@@ -336,23 +368,26 @@ async function ask(question) {
   messages.appendChild(typing);
   messages.scrollTop = messages.scrollHeight;
   setBusy(true, 'Checking approved information…');
+  const minimumReplyDelay = wait(typingDelayFor(clean));
 
   try {
     const result = await requestAssistant(clean, priorHistory);
+    await minimumReplyDelay;
     typing.remove();
     const note = result.mode === 'ai'
-      ? 'AI-assisted answer checked against retrieved sources.'
+      ? "Checked against BUMA's published info."
       : result.mode === 'receptionist'
-        ? 'Automated receptionist response.'
-        : 'Answered from verified site information.';
+        ? 'Quick receptionist note.'
+        : 'Answered from verified BUMA information.';
     appendMessage(result.answer, 'assistant', result.sources || [], note, result.actions || []);
     conversationHistory.push({ role: 'assistant', content: result.answer.slice(0, 500) });
     setBusy(false, 'Ready');
   } catch {
-    typing.remove();
     const contextQuery = [...priorHistory.filter((item) => item.role === 'user').slice(-2).map((item) => item.content), clean].join(' ');
     const documents = retrieve(contextQuery);
     const fallback = composeLocal(clean, documents);
+    await minimumReplyDelay;
+    typing.remove();
     appendMessage(fallback, 'assistant', documents.slice(0, 1), 'Live assistant unavailable; using the on-page verified information.');
     conversationHistory.push({ role: 'assistant', content: fallback.slice(0, 500) });
     setBusy(false, 'Ready · local information mode');

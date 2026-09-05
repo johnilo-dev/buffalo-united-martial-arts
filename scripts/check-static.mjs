@@ -28,7 +28,7 @@ for (const localReference of [...html.matchAll(/(?:src|href)="(?!https?:|mailto:
 
 if (/sk-[a-z0-9]{16,}/i.test(combined)) errors.push('Possible API key found in tracked source');
 if (/[↗↘↓]/.test(html)) errors.push('Directional Unicode glyph found; use CSS icons to avoid emoji rendering on iOS');
-if (!html.includes('type="module" src="app.js"')) errors.push('app.js must load as an ES module');
+if (!/type="module"\s+src="app\.js(?:\?v=[^"]+)?"/.test(html)) errors.push('app.js must load as an ES module');
 if (!worker.includes("model: 'deepseek-v4-flash'")) errors.push('Worker is not configured for deepseek-v4-flash');
 if (!html.includes('noindex, nofollow')) errors.push('Temporary personal preview must remain noindex');
 

@@ -49,7 +49,25 @@ test('greets visitors without requiring knowledge retrieval', async () => {
   const response = await handleRequest(request('Hello'), {});
   const payload = await response.json();
   assert.equal(payload.mode, 'receptionist');
-  assert.match(payload.answer, /virtual receptionist/i);
+  assert.match(payload.answer, /welcome to Buffalo United/i);
+});
+
+test('answers harmless receptionist small talk locally without DeepSeek', async () => {
+  let aiRateCalls = 0;
+  const response = await handleRequest(request('What time is it?'), {
+    DEEPSEEK_API_KEY: 'test-secret-value',
+    BUMA_AI_RATE_LIMITER: {
+      limit: async () => {
+        aiRateCalls += 1;
+        return { success: true };
+      },
+    },
+  });
+  const payload = await response.json();
+  assert.equal(response.status, 200);
+  assert.equal(payload.mode, 'receptionist');
+  assert.match(payload.answer, /In Buffalo/);
+  assert.equal(aiRateCalls, 0);
 });
 
 test('handles first-visit unknowns without inventing facts or citing unrelated pages', async () => {
