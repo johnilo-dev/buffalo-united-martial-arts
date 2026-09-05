@@ -242,14 +242,14 @@ function composeLocal(query, documents) {
   if (/^(show|view|see)? ?(the )?(class )?schedule$/.test(normalized)) {
     return 'You can view BUMA’s published class schedule below. Class times can change, so please confirm with the academy before your first visit.';
   }
-  if (/\b(services|offerings|programs)\b/.test(normalized) || /\bwhat (class|classes|training)\b/.test(normalized) || /\bwhat do you (offer|teach)\b/.test(normalized)) {
-    return 'Of course. Buffalo United offers Brazilian Jiu-Jitsu, Muay Thai, MMA, kids martial arts, Judo, Sambo, boxing, submission wrestling and Kru Fit cardio. Want me to show the published class times next?';
-  }
-  if (/\b(book|booking|reserve|reservation|appointment|enroll|enrollment|join|sign up|signup|first class|try a class|try class|interested)\b/.test(normalized)) {
+  if (/\b(book|booking|reserve|reservation|appointment|register|registration|enroll|enrollment|join|sign up|signup|first class|try a class|try class|interested)\b/.test(normalized)) {
     return 'I can’t confirm a booking from chat, but the best next step is to send a first-class request. It asks for the basics so BUMA can follow up with the right program, timing and next steps.';
   }
   if (/\b(price|pricing|cost|membership|trial|fee|discount)\b/.test(normalized)) {
     return "Current prices and trial terms aren’t published in the approved information, so I don’t want to guess. If you send a first-class request, BUMA can follow up with the current rates and the best option for the program you’re interested in.";
+  }
+  if (/\b(services|offerings|programs)\b/.test(normalized) || /\bwhat (class|classes|training)\b/.test(normalized) || /\bwhat do you (offer|teach)\b/.test(normalized)) {
+    return 'Of course. Buffalo United offers Brazilian Jiu-Jitsu, Muay Thai, MMA, kids martial arts, Judo, Sambo, boxing, submission wrestling and Kru Fit cardio. Want me to show the published class times next?';
   }
   if (/^(hi|hello|hey|good morning|good afternoon|good evening)( there)?$/.test(normalized)) {
     return 'Hi, welcome to Buffalo United. I can help with programs, published class times, instructors, location and getting ready for a first visit. What would you like to check first?';
@@ -278,7 +278,7 @@ function composeLocal(query, documents) {
 function localActions(query, documents) {
   const normalized = normalize(query);
   const categories = new Set(documents.map((document) => document.category));
-  if (/\b(book|booking|reserve|reservation|appointment|enroll|enrollment|join|sign up|signup|first class|try a class|try class|interested|price|pricing|cost|membership|trial|fee|discount)\b/.test(normalized)) {
+  if (/\b(book|booking|reserve|reservation|appointment|register|registration|enroll|enrollment|join|sign up|signup|first class|try a class|try class|interested|price|pricing|cost|membership|trial|fee|discount)\b/.test(normalized)) {
     return [
       { label: 'Request first class', href: leadFormUrl },
       { label: 'Call the academy', href: 'tel:+17166717197' },

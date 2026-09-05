@@ -150,8 +150,8 @@ test('routes pricing and trial questions to the first-class request form without
   assert.equal(aiRateCalls, 0);
 });
 
-test('routes booking and enrollment intent to the first-class request form', async () => {
-  const response = await handleRequest(request('I want to book my first class'), {});
+test('routes booking, registration and enrollment intent to the first-class request form', async () => {
+  const response = await handleRequest(request('How do I register and enroll?'), {});
   const payload = await response.json();
   assert.equal(response.status, 200);
   assert.equal(payload.mode, 'receptionist');

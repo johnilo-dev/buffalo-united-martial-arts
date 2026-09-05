@@ -156,7 +156,7 @@ function receptionistRoute(message) {
   if (/\b(what.*wear|what.*bring|equipment|gear|waiver|parking|age requirement|how old)\b/.test(normalized)) {
     return { answer: "That first-visit detail isn’t included in the approved academy information yet, so I don’t want to guess. You can send a first-class request or call BUMA to confirm before you arrive.", sourceIds: [], actions: ['leadForm', 'call', 'email'] };
   }
-  if (/\b(book|booking|reserve|reservation|appointment|enroll|enrollment|join|sign up|signup|first class|try a class|try class|interested)\b/.test(normalized)) {
+  if (/\b(book|booking|reserve|reservation|appointment|register|registration|enroll|enrollment|join|sign up|signup|first class|try a class|try class|interested)\b/.test(normalized)) {
     return { answer: 'I can’t confirm a booking from chat, but the best next step is to send a first-class request. It asks for the basics so BUMA can follow up with the right program, timing and next steps.', sourceIds: [], actions: ['leadForm', 'call', 'schedule'] };
   }
   if (/\b(price|pricing|cost|membership|trial|fee|discount)\b/.test(normalized)) {
@@ -314,7 +314,7 @@ function recommendedActions(message, documents) {
   const categories = new Set(documents.map((document) => document.category));
   const normalized = normalize(message);
   if (categories.has('contact') && /\b(where|location|address|directions|parking)\b/.test(normalized)) return actionView(['directions', 'call']);
-  if (/\b(book|booking|reserve|reservation|appointment|enroll|enrollment|join|sign up|signup|first class|try a class|try class|interested|price|pricing|cost|membership|trial|fee|discount)\b/.test(normalized)) return actionView(['leadForm', 'call', 'email']);
+  if (/\b(book|booking|reserve|reservation|appointment|register|registration|enroll|enrollment|join|sign up|signup|first class|try a class|try class|interested|price|pricing|cost|membership|trial|fee|discount)\b/.test(normalized)) return actionView(['leadForm', 'call', 'email']);
   if (categories.has('schedule')) return actionView(['schedule', 'leadForm', 'call']);
   if (categories.has('programs') || categories.has('about')) return actionView(['leadForm', 'schedule', 'call']);
   if (categories.has('contact') || categories.has('membership')) return actionView(['leadForm', 'call', 'email']);
