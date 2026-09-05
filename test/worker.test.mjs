@@ -125,7 +125,7 @@ test('handles first-visit unknowns without inventing facts or citing unrelated p
   const response = await handleRequest(request('What should I wear to my first class?'), {});
   const payload = await response.json();
   assert.equal(payload.mode, 'receptionist');
-  assert.match(payload.answer, /isn’t included|don't want to guess/i);
+  assert.match(payload.answer, /don’t have confirmed details/i);
   assert.deepEqual(payload.sources, []);
   assert.ok(payload.actions.some((action) => action.label === 'Call the academy'));
 });
@@ -172,7 +172,7 @@ test('routes the schedule shortcut to a useful receptionist action', async () =>
   const response = await handleRequest(request('Show the class schedule'), {});
   const payload = await response.json();
   assert.equal(payload.mode, 'receptionist');
-  assert.match(payload.answer, /published class schedule/i);
+  assert.match(payload.answer, /View class schedule/i);
   assert.ok(payload.actions.some((action) => action.href === '#schedule'));
 });
 
@@ -298,7 +298,8 @@ test('falls back to retrieval when the AI-rate limit is reached', async () => {
     assert.equal(payload.mode, 'retrieval');
     assert.equal(payload.limited, true);
     assert.equal(upstreamCalls, 0);
-    assert.match(payload.answer, /protect the academy's chat budget/);
+    assert.doesNotMatch(payload.answer, /chat budget|AI-assisted|retrieval/i);
+    assert.match(payload.answer, /Sunday|12 PM/);
   } finally {
     globalThis.fetch = originalFetch;
   }

@@ -1,4 +1,5 @@
 import { BUMA_KNOWLEDGE } from './knowledge.js';
+import { customerReply } from './chat-copy.js';
 
 const scheduleData = {
   weekday: [
@@ -218,44 +219,31 @@ function composeLocal(query, documents) {
   if (/\b(injury|injured|pain|medical|diagnose|concussion|medicine)\b/.test(normalized)) {
     return 'I can’t provide medical advice. For urgent symptoms, contact emergency services. Otherwise, speak with a qualified healthcare professional and contact the academy directly before training.';
   }
-  if (/\b(deepseek|chatgpt|language model)\b/.test(normalized) || /\b(who|what) are you\b/.test(normalized) || /\bare you (an |a )?(ai|bot|human)\b/.test(normalized)) {
-    return "I’m BUMA’s virtual receptionist. I can answer from approved public academy info, and I use DeepSeek only when a question needs a little extra help. I’m not human and I can’t complete bookings, but I can point you to the right next step.";
-  }
+  const friendly = customerReply(normalized);
+  if (friendly) return friendly.answer;
   if (/\b(what time is it|current time|time now|today's date|todays date|what day is it|current date)\b/.test(normalized)) {
     return `It’s ${buffaloTime()} in Buffalo. If you’re checking class timing, I can show the published schedule too.`;
   }
   if (/\b(weather|temperature|raining|snowing|forecast)\b/.test(normalized)) {
-    return "I can’t check live weather from here, but I can help with BUMA’s published class times, location and contact info. If weather might affect your trip, it’s best to call before heading over.";
+    return "I can’t check live weather from here, but I can help with BUMA’s class times, location and contact info. If weather might affect your trip, it’s best to call before heading over.";
   }
   if (/\b(how are you|how's it going|hows it going|how are things)\b/.test(normalized)) {
     return "I’m doing well, thanks for asking. I’m here to help you find the right BUMA class, check published times, or get directions when you’re ready.";
   }
   if (/\b(can you help|help me|what can you do)\b/.test(normalized)) {
-    return "Absolutely. I can help with BUMA’s programs, published class times, instructors, location, contact info and first-visit questions. If something isn’t published yet, I’ll point you to the academy instead of guessing.";
+    return "Absolutely. I can help with BUMA’s programs, class times, instructors, location, contact info and first-visit questions. If something isn’t published yet, I’ll point you to the academy instead of guessing.";
   }
   if (/\b(where are you|where is buma|located|location|address|directions|get there)\b/.test(normalized)) {
     return 'Buffalo United Martial Arts is at 359 Ganson Street, Buffalo, New York 14203, in the Buffalo RiverWorks area downtown.';
   }
-  if (/\b(what.*wear|what.*bring|equipment|gear|waiver|parking|age requirement|how old)\b/.test(normalized)) {
-    return "That first-visit detail isn’t included in the approved academy information yet, so I don’t want to guess. You can send a first-class request or call BUMA to confirm before you arrive.";
-  }
-  if (/^(show|view|see)? ?(the )?(class )?schedule$/.test(normalized)) {
-    return 'You can view BUMA’s published class schedule below. Class times can change, so please confirm with the academy before your first visit.';
-  }
-  if (/\b(book|booking|reserve|reservation|appointment|register|registration|enroll|enrollment|join|sign up|signup|first class|try a class|try class|interested)\b/.test(normalized)) {
-    return 'Great — the easiest way to get started is to fill out the first-class request form. Just click “Request first class,” share the basics, and BUMA can follow up with the right program, timing and next steps.';
-  }
-  if (/\b(price|pricing|cost|membership|trial|fee|discount)\b/.test(normalized)) {
-    return "Current prices and trial terms aren’t published in the approved information, so I don’t want to guess. If you send a first-class request, BUMA can follow up with the current rates and the best option for the program you’re interested in.";
-  }
   if (/\b(services|offerings|programs)\b/.test(normalized) || /\bwhat (class|classes|training)\b/.test(normalized) || /\bwhat do you (offer|teach)\b/.test(normalized)) {
-    return 'Of course. Buffalo United offers Brazilian Jiu-Jitsu, Muay Thai, MMA, kids martial arts, Judo, Sambo, boxing, submission wrestling and Kru Fit cardio. Want me to show the published class times next?';
+    return 'Of course. Buffalo United offers Brazilian Jiu-Jitsu, Muay Thai, MMA, kids martial arts, Judo, Sambo, boxing, submission wrestling and Kru Fit cardio. Want me to show the class times next?';
   }
   if (/^(hi|hello|hey|good morning|good afternoon|good evening)( there)?$/.test(normalized)) {
-    return 'Hi, welcome to Buffalo United. I can help with programs, published class times, instructors, location and getting ready for a first visit. What would you like to check first?';
+    return 'Hi, welcome to Buffalo United. I can help with programs, class times, instructors, location and getting ready for a first visit. What would you like to check first?';
   }
   if (!documents.length) {
-    return "I don’t have verified BUMA information about that yet. I can still help with programs, published class times, instructors, location and contact details, or point you to the academy for anything else.";
+    return "I don’t have that detail yet. Could you tell me which class or part of your visit you mean?";
   }
   if (normalized.includes('beginner') || normalized.includes('never trained') || normalized.includes('new')) {
     return 'BUMA’s published information says its programs serve beginners through experienced martial artists. Fundamentals and all-level sessions are listed, but contact the academy before your first visit so staff can recommend the right class.';
@@ -267,7 +255,7 @@ function composeLocal(query, documents) {
     return 'Great — the easiest way to get started is to fill out the first-class request form. Just click “Request first class,” share the basics, and BUMA can follow up with the right program, timing and next steps.';
   }
   if (normalized.includes('phone') || normalized.includes('number') || normalized.includes('contact')) {
-    return 'The current official site displays (716) 671-7197 and info@fightfamily.com. Its click-to-call link and the supplied Google listing use (716) 563-0720, so the primary number still needs owner confirmation.';
+    return 'BUMA’s website lists (716) 671-7197 and info@fightfamily.com. Google Maps lists a different number, (716) 563-0720; I can’t confirm which is current. Email is another way to reach the team.';
   }
   if (normalized.includes('schedule') && documents.length > 1) {
     return `Published schedule highlights: ${documents.map((document) => document.text).join(' ')} Schedules can change, so confirm before your first visit.`;
@@ -400,18 +388,14 @@ async function ask(question) {
   typing.innerHTML = '<p aria-label="Assistant is responding">•••</p>';
   messages.appendChild(typing);
   messages.scrollTop = messages.scrollHeight;
-  setBusy(true, 'Checking approved information…');
+  setBusy(true, 'One moment…');
   const minimumReplyDelay = wait(typingDelayFor(clean));
 
   try {
     const result = await requestAssistant(clean, priorHistory);
     await minimumReplyDelay;
     typing.remove();
-    const note = result.mode === 'ai'
-      ? "Checked against BUMA's published info."
-      : result.mode === 'receptionist'
-        ? 'Quick receptionist note.'
-        : 'Answered from verified BUMA information.';
+    const note = '';
     appendMessage(result.answer, 'assistant', result.sources || [], note, result.actions || []);
     conversationHistory.push({ role: 'assistant', content: result.answer.slice(0, 500) });
     setBusy(false, 'Ready');
@@ -421,9 +405,14 @@ async function ask(question) {
     const fallback = composeLocal(clean, documents);
     await minimumReplyDelay;
     typing.remove();
-    appendMessage(fallback, 'assistant', documents.slice(0, 1), 'Live assistant unavailable; using the on-page verified information.', localActions(clean, documents));
+    const safety = /\b(911|emergency|unconscious|not breathing|severe bleeding|immediate danger|injury|injured|pain|medical|diagnose|concussion|medicine)\b/.test(normalize(clean));
+    const friendly = safety ? null : customerReply(normalize(clean));
+    const fallbackSources = safety ? [] : friendly ? BUMA_KNOWLEDGE.filter(item => friendly.sourceIds.includes(item.id)) : documents.slice(0, 1);
+    const actionOptions = { leadForm: {label: 'Request first class', href: leadFormUrl}, call: {label: 'Call the academy', href: 'tel:+17166717197'}, schedule: {label: 'View class schedule', href: '#schedule'} };
+    const fallbackActions = safety ? [] : friendly ? friendly.actions.map(key => actionOptions[key]).filter(Boolean) : localActions(clean, documents);
+    appendMessage(fallback, 'assistant', fallbackSources, 'Connection interrupted. Here’s what I can tell you from the website.', fallbackActions);
     conversationHistory.push({ role: 'assistant', content: fallback.slice(0, 500) });
-    setBusy(false, 'Ready · local information mode');
+    setBusy(false, 'Ready');
   }
   input.focus();
 }
