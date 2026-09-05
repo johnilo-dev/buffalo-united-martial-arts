@@ -9,6 +9,7 @@ A responsive website and guarded information assistant for Buffalo United Martia
 - Bottom-right “Ask BUMA” virtual receptionist with deterministic answers and local retrieval over a curated knowledge base
 - Grounded source links on every retrieved answer
 - Explicit handling of uncertain information, including unpublished prices and the two phone numbers found across the official page and Google listing
+- Live Buffalo-area weather responses through the National Weather Service, cached server-side
 - AI budget protection with request limits before DeepSeek is called
 - Keyboard navigation, semantic landmarks, reduced-motion support and mobile layout
 
@@ -43,6 +44,8 @@ The Worker uses layered limits so common questions do not drain the DeepSeek bal
 
 The in-memory limiters are retained only as local-development fallbacks.
 
+Weather questions are answered by the Worker through the National Weather Service API and cached for 10 minutes. Weather responses do not use DeepSeek.
+
 Never expose an LLM API key in browser JavaScript.
 
 ### Worker deployment
@@ -68,3 +71,4 @@ The personal GitHub Pages deployment is intentionally marked `noindex` while it 
 - [Official home](https://buffalounitedmartialarts.com/home)
 - [Official contact page](https://buffalounitedmartialarts.com/contact-us)
 - [Google Maps listing](https://www.google.com/maps/search/?api=1&query=Buffalo+United+Martial+Arts+Academy+359+Ganson+St+Buffalo+NY)
+- [National Weather Service API](https://www.weather.gov/documentation/services-web-API)

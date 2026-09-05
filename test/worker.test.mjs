@@ -70,6 +70,55 @@ test('answers harmless receptionist small talk locally without DeepSeek', async 
   assert.equal(aiRateCalls, 0);
 });
 
+test('answers live weather questions from the National Weather Service without DeepSeek', async () => {
+  const originalFetch = globalThis.fetch;
+  const calls = [];
+  let aiRateCalls = 0;
+  globalThis.fetch = async (url) => {
+    calls.push(String(url));
+    if (String(url).includes('/points/')) {
+      return new Response(JSON.stringify({
+        properties: { forecastHourly: 'https://api.weather.gov/gridpoints/BUF/40,40/forecast/hourly' },
+      }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    }
+    return new Response(JSON.stringify({
+      properties: {
+        periods: [{
+          temperature: 72,
+          temperatureUnit: 'F',
+          shortForecast: 'Mostly Cloudy',
+          windSpeed: '8 mph',
+          windDirection: 'W',
+        }],
+      },
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  };
+  try {
+    const env = {
+      DEEPSEEK_API_KEY: 'test-secret-value',
+      BUMA_AI_RATE_LIMITER: {
+        limit: async () => {
+          aiRateCalls += 1;
+          return { success: true };
+        },
+      },
+    };
+    const first = await handleRequest(request('What is the weather like there?'), env);
+    const second = await handleRequest(request('Is it raining at BUMA?'), env);
+    const firstPayload = await first.json();
+    const secondPayload = await second.json();
+    assert.equal(first.status, 200);
+    assert.equal(firstPayload.mode, 'receptionist');
+    assert.match(firstPayload.answer, /Near BUMA in Buffalo right now: 72°F, mostly cloudy, wind 8 mph W/);
+    assert.deepEqual(firstPayload.sources.map((source) => source.id), ['weather']);
+    assert.equal(secondPayload.answer, firstPayload.answer);
+    assert.equal(calls.length, 2);
+    assert.equal(aiRateCalls, 0);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('handles first-visit unknowns without inventing facts or citing unrelated pages', async () => {
   const response = await handleRequest(request('What should I wear to my first class?'), {});
   const payload = await response.json();

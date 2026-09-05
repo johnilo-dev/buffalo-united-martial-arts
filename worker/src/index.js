@@ -10,9 +10,13 @@ const AI_RATE_LIMIT = 5;
 const DAILY_BROWSER_AI_LIMIT = 25;
 const DAILY_IP_AI_LIMIT = 40;
 const DAILY_GLOBAL_AI_LIMIT = 250;
+const WEATHER_CACHE_MS = 10 * 60_000;
+const BUMA_LATITUDE = 42.8673;
+const BUMA_LONGITUDE = -78.8723;
 const requestBuckets = new Map();
 const aiBuckets = new Map();
 const localAiDailyUsage = new Map();
+let weatherCache = null;
 const aliases = {
   'brazilian jiu jitsu': 'bjj',
   'jiu-jitsu': 'bjj',
@@ -54,6 +58,56 @@ function buffaloTime() {
     minute: '2-digit',
     timeZoneName: 'short',
   }).format(new Date());
+}
+
+function isWeatherQuestion(normalized) {
+  return /\b(weather|temperature|raining|rain|snowing|snow|forecast|conditions|cold|hot)\b/.test(normalized);
+}
+
+async function fetchNwsJson(url) {
+  const response = await fetch(url, {
+    headers: {
+      Accept: 'application/geo+json, application/json',
+      'User-Agent': 'BUMA Chat API (info@fightfamily.com)',
+    },
+  });
+  if (!response.ok) throw new Error(`Weather.gov status ${response.status}`);
+  return response.json();
+}
+
+function formatWeatherPeriod(period) {
+  const parts = [];
+  if (Number.isFinite(period?.temperature)) {
+    parts.push(`${period.temperature}°${period.temperatureUnit || 'F'}`);
+  }
+  if (typeof period?.shortForecast === 'string' && period.shortForecast.trim()) {
+    parts.push(period.shortForecast.trim().toLowerCase());
+  }
+  if (typeof period?.windSpeed === 'string' && period.windSpeed.trim()) {
+    parts.push(`wind ${period.windSpeed.trim()}${period.windDirection ? ` ${period.windDirection}` : ''}`);
+  }
+  return parts.join(', ');
+}
+
+async function buffaloWeather() {
+  const now = Date.now();
+  if (weatherCache && weatherCache.expiresAt > now) return weatherCache.value;
+  const point = await fetchNwsJson(`https://api.weather.gov/points/${BUMA_LATITUDE},${BUMA_LONGITUDE}`);
+  const forecastUrl = point?.properties?.forecastHourly || point?.properties?.forecast;
+  if (!forecastUrl) throw new Error('Weather.gov point response did not include a forecast URL');
+  const forecast = await fetchNwsJson(forecastUrl);
+  const period = forecast?.properties?.periods?.[0];
+  const conditions = formatWeatherPeriod(period);
+  if (!conditions) throw new Error('Weather.gov forecast response did not include usable conditions');
+  const answer = `Near BUMA in Buffalo right now: ${conditions}. Weather can change quickly, so check again before you head out, especially if travel conditions look rough.`;
+  const value = {
+    answer,
+    sources: [{ id: 'weather', source: 'National Weather Service', url: 'https://api.weather.gov' }],
+    actions: actionView(['directions', 'call']),
+    mode: 'receptionist',
+  };
+  weatherCache = { value, expiresAt: now + WEATHER_CACHE_MS };
+  return value;
 }
 
 export function retrieve(query, limit = 4) {
@@ -105,9 +159,7 @@ function receptionistRoute(message) {
   if (/\b(what time is it|current time|time now|today's date|todays date|what day is it|current date)\b/.test(normalized)) {
     return { answer: `In Buffalo, it’s ${buffaloTime()}. Class times can still change, so please confirm with the academy before your first visit.`, sourceIds: [], actions: ['schedule'] };
   }
-  if (/\b(weather|temperature|raining|snowing|forecast)\b/.test(normalized)) {
-    return { answer: "I can’t check live weather from here, but I can help with BUMA’s published class times, location and contact info. If weather might affect your trip, it’s best to call before heading over.", sourceIds: [], actions: ['call', 'directions'] };
-  }
+  if (isWeatherQuestion(normalized)) return { weather: true };
   if (/\b(how are you|how's it going|hows it going|how are things)\b/.test(normalized)) {
     return { answer: "I’m doing well, thanks for asking. I’m here to help you find the right BUMA class, check published times, or get directions when you’re ready.", sourceIds: [], actions: ['schedule', 'directions'] };
   }
@@ -461,6 +513,18 @@ export async function handleRequest(request, env = {}) {
   const visitorKey = clientKey(payload?.visitorId);
   const direct = receptionistRoute(message);
   if (direct) {
+    if (direct.weather) {
+      try {
+        return response(await buffaloWeather(), 200, origin, true);
+      } catch {
+        return response({
+          answer: "I couldn’t reach the National Weather Service just now. I can still help with BUMA’s schedule, location and contact info, and it’s a good idea to check conditions before heading over.",
+          sources: [],
+          actions: actionView(['directions', 'call']),
+          mode: 'receptionist',
+        }, 200, origin, true);
+      }
+    }
     const documents = selectDocuments(direct.sourceIds);
     return response({
       answer: direct.answer,
